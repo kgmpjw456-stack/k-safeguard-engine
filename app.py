@@ -501,11 +501,11 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
                 X_train_s, X_test_s = X_train.values, X_test.values
 
             hidden_tuple = eval(mlp_hidden)
-            model_dict = {
-                "Logistic Regression": LogisticRegression(C=lr_c, max_iter=1000, random_state=42),
-                "Decision Tree": DecisionTreeClassifier(max_depth=dt_depth, random_state=42),
-                "Neural Network (MLP)": MLPClassifier(hidden_layer_sizes=hidden_tuple, max_iter=300, random_state=42)
-            }
+            models = {
+            "Logistic Regression": LogisticRegression(C=c_val, class_weight="balanced", max_iter=1000, random_state=42),
+            "Decision Tree": DecisionTreeClassifier(max_depth=max_d, class_weight="balanced", random_state=42),
+            "Neural Network (MLP)": MLPClassifier(hidden_layer_sizes=mlp_tuple, max_iter=300, random_state=42)
+        }
 
             results = []
             trained_models = {}
@@ -513,9 +513,8 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
 
             for name, m in model_dict.items():
                 m.fit(X_train_s, y_train)
-                y_pred = m.predict(X_test_s)
-                y_prob = m.predict_proba(X_test_s)[:, 1]
-
+               y_prob = model.predict_proba(X_test_proc)[:, 1]
+            y_pred = (y_prob >= 0.38).astype(int)
                 acc = accuracy_score(y_test, y_pred)
                 prec = precision_score(y_test, y_pred, zero_division=0)
                 rec = recall_score(y_test, y_pred, zero_division=0)
