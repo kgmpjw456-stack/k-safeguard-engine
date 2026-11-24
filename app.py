@@ -502,8 +502,8 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
 
             hidden_tuple = eval(mlp_hidden)
             model_dict = {
-                "Logistic Regression": LogisticRegression(C=lr_c, class_weight="balanced", max_iter=1000, random_state=42),
-                "Decision Tree": DecisionTreeClassifier(max_depth=dt_depth, class_weight="balanced", random_state=42),
+                "Logistic Regression": LogisticRegression(C=lr_c, max_iter=1000, random_state=42),
+                "Decision Tree": DecisionTreeClassifier(max_depth=dt_depth, random_state=42),
                 "Neural Network (MLP)": MLPClassifier(hidden_layer_sizes=hidden_tuple, max_iter=300, random_state=42)
             }
 
@@ -514,7 +514,7 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
             for name, m in model_dict.items():
                 m.fit(X_train_s, y_train)
                 y_prob = m.predict_proba(X_test_s)[:, 1]
-                y_pred = (y_prob >= 0.52).astype(int)
+                y_pred = (y_prob >= 0.32).astype(int)
                 acc = accuracy_score(y_test, y_pred)
                 prec = precision_score(y_test, y_pred, zero_division=0)
                 rec = recall_score(y_test, y_pred, zero_division=0)
@@ -560,7 +560,7 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
                     fill="toself",
                     name=row["모델명"]
                 ))
-            radar_fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0.5, 1.0])), title="3대 AI 모델 다차원 성능 레이더 차트")
+            radar_fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0.4, 1.0])), title="3대 AI 모델 다차원 성능 레이더 차트")
             st.plotly_chart(radar_fig, use_container_width=True)
 
         with col_r2:
