@@ -355,6 +355,15 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
 
         st.success(f"✅ 전처리 완료! 원본 {before_cnt:,}건 → 정제 후 {len(df_p):,}건 (최종 투입 변수: {len(final_features)}개)")
 
+        removed_cnt = before_cnt - len(df_p)
+        train_cnt = int(len(df_p) * (1 - test_ratio))
+        test_cnt = len(df_p) - train_cnt
+
+        m1, m2, m3 = st.columns(3)
+        m1.metric("제거된 초고가 이상치", f"{removed_cnt:,} 건", f"원본 대비 {(removed_cnt/before_cnt)*100:.1f}% 정제")
+        m2.metric("AI 모델 학습용 데이터 (Train)", f"{train_cnt:,} 건", f"전체의 {(1-test_ratio)*100:.0f}%")
+        m3.metric("AI 모델 검증용 데이터 (Test)", f"{test_cnt:,} 건", f"전체의 {test_ratio*100:.0f}%")
+
         c_b1, c_b2 = st.columns(2)
         with c_b1:
             fig_before = px.histogram(df, x="price", nbins=50, title="전처리 전(Before) 주택 가격 분포", color_discrete_sequence=["#94a3b8"])
@@ -363,6 +372,9 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
             fig_after = px.histogram(df_p, x="price", nbins=50, title="전처리 후(After) 정제된 담보 가격 분포", color_discrete_sequence=["#0d9488"])
             st.plotly_chart(fig_after, use_container_width=True)
 
+        st.subheader("📋 파생변수 생성 및 전처리 완료 데이터 샘플 (상위 10건)")
+        preview_cols = ["price", "building_age", "overvaluation_ratio"] + [c for c in ["estimated_ltv", "location_premium"] if c in df_p.columns] + ["Risk_Label"]
+        st.dataframe(df_p[preview_cols].head(10), use_container_width=True, hide_index=True)
 # =========================================================
 # 모듈 3: AI 심사 엔진 학습 및 검증 (로지스틱 · 의사결정나무 · 인공신경망)
 # =========================================================
