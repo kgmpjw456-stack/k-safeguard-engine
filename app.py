@@ -501,11 +501,11 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
                 X_train_s, X_test_s = X_train.values, X_test.values
 
             hidden_tuple = eval(mlp_hidden)
-            models = {
-            "Logistic Regression": LogisticRegression(C=c_val, class_weight="balanced", max_iter=1000, random_state=42),
-            "Decision Tree": DecisionTreeClassifier(max_depth=max_d, class_weight="balanced", random_state=42),
-            "Neural Network (MLP)": MLPClassifier(hidden_layer_sizes=mlp_tuple, max_iter=300, random_state=42)
-        }
+            model_dict = {
+                "Logistic Regression": LogisticRegression(C=lr_c, class_weight="balanced", max_iter=1000, random_state=42),
+                "Decision Tree": DecisionTreeClassifier(max_depth=dt_depth, class_weight="balanced", random_state=42),
+                "Neural Network (MLP)": MLPClassifier(hidden_layer_sizes=hidden_tuple, max_iter=300, random_state=42)
+            }
 
             results = []
             trained_models = {}
