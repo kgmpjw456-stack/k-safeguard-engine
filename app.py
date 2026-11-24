@@ -514,7 +514,7 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
             for name, m in model_dict.items():
                 m.fit(X_train_s, y_train)
                 y_prob = m.predict_proba(X_test_s)[:, 1]
-                y_pred = (y_prob >= 0.38).astype(int)
+                y_pred = (y_prob >= 0.52).astype(int)
                 acc = accuracy_score(y_test, y_pred)
                 prec = precision_score(y_test, y_pred, zero_division=0)
                 rec = recall_score(y_test, y_pred, zero_division=0)
