@@ -218,11 +218,15 @@ if menu == "1. 포트폴리오 & 심층 EDA":
 
     with col_c2:
         matrix_df = df.pivot_table(index="grade", columns="condition", values="High_Risk", aggfunc="mean") * 100
+        matrix_df = df.pivot_table(index="grade", columns="condition", values="High_Risk", aggfunc="mean") * 100
         fig_matrix = px.imshow(
             matrix_df, text_auto=".1f", color_continuous_scale="YlOrRd", aspect="auto",
+            origin="lower",
             labels={"x": "주택 관리 상태 (1:불량 ~ 5:최상)", "y": "건축 등급 (Grade)", "color": "고위험률(%)"},
             title="건축 등급 × 관리 상태별 부실 위험률(%) 매트릭스"
         )
+        fig_matrix.update_xaxes(dtick=1)
+        fig_matrix.update_yaxes(dtick=1)
         st.plotly_chart(fig_matrix, use_container_width=True)
 
     # 1-5. 공간(GIS) 담보가치 & 리스크 지도 + 행정구역별 위험 TOP 15
