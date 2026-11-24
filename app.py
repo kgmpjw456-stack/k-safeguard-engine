@@ -156,8 +156,16 @@ if menu == "1. 포트폴리오 & 심층 EDA":
     )
 
     # 1-2. 데이터 요약 & 기초 통계량 (접이식/탭 구성으로 깔끔하게 정리)
-    with st.expander("📋 원본 데이터 미리보기 및 기초 통계량(기술통계) 상세 확인", expanded=False):
-        tab_stat, tab_raw = st.tabs(["기초 통계량 요약표", "실거래 데이터 샘플 (상위 50건)"])
+    with st.expander("📋 데이터 구조 · 변수 명세서 및 기초 통계량 상세 확인", expanded=False):
+        tab_info, tab_stat, tab_raw = st.tabs(["전체 변수 명세표", "기초 통계량 요약표", "실거래 데이터 샘플 (상위 50건)"])
+        with tab_info:
+            info_df = pd.DataFrame({
+                "변수명": df.columns,
+                "데이터 타입": df.dtypes.astype(str).values,
+                "결측치 수": df.isnull().sum().values,
+                "고유값 수": df.nunique().values
+            })
+            st.dataframe(info_df, use_container_width=True, hide_index=True)
         with tab_stat:
             desc_cols = ["price", "bedrooms", "bathrooms", "sqft_living", "floors", "grade", "condition", "building_age", "overvaluation_ratio"]
             desc_df = df[desc_cols].describe().T[["count", "mean", "std", "min", "50%", "max"]].round(2)
@@ -165,7 +173,6 @@ if menu == "1. 포트폴리오 & 심층 EDA":
             st.dataframe(desc_df, use_container_width=True)
         with tab_raw:
             st.dataframe(df.head(50), use_container_width=True)
-
     st.divider()
 
     # 1-3. 타깃(고위험군 vs 안전군) 비교 심층 분석
@@ -301,36 +308,93 @@ if menu == "1. 포트폴리오 & 심층 EDA":
         st.info("💡 VIF가 10을 초과하는 변수는 다음 '2. 데이터 전처리' 단계에서 표준화(Scaling)하거나 선택적으로 제외하여 모델 신뢰성을 높입니다.")
 
 # =========================================================
-# 모듈 2: 데이터 전처리 & 파생변수 공학
+# 모듈 2: 데이터 전처리 & 파생변수 공학 (엔터프라이즈 풀버전)
 # =========================================================
 elif menu == "2. 데이터 전처리 & 파생변수 공학":
-    st.header("⚙️ 2. 실전 데이터 전처리 및 금융 파생변수 공학")
-    st.write("공기업 서민 보증 심사에 부적합한 초고가 호화주택 이상치를 정제하고, 예측력을 극대화하는 금융·부동산 파생변수를 생성합니다.")
+    st.header("⚙️ 2. 실전 데이터 품질 감사 및 전처리·파생변수 공학")
+    st.write("원본 데이터의 무결성(결측·중복·변수 구조)을 정밀 진단한 뒤, 공기업 보증 심사 기준에 맞춘 정제 및 파생변수 파이프라인을 실행합니다.")
 
+    # 2-1. 원본 데이터 품질 감사 (Data Quality Audit)
+    st.subheader("🔍 1) 원본 데이터 품질 감사 (Data Quality Audit)")
+    raw_rows, raw_cols = df.shape
+    dup_cnt = df.duplicated().sum()
+    null_cnt = df.isnull().sum().sum()
+
+    q1, q2, q3, q4 = st.columns(4)
+    q1.metric("전체 데이터 행 수 (Rows)", f"{raw_rows:,} 건")
+    q2.metric("전체 변수 열 수 (Columns)", f"{raw_cols} 개")
+    q3.metric("결측치 총 건수 (Missing)", f"{null_cnt} 건", "무결성 양호" if null_cnt == 0 else "정제 필요")
+    q4.metric("중복 데이터 행 수 (Duplicates)", f"{dup_cnt} 건", "중복 없음" if dup_cnt == 0 else "제거 권장")
+
+    with st.expander("📑 전체 변수 명세서 및 결측률·데이터 타입 상세 확인 (클릭하여 펼치기)", expanded=True):
+        var_desc_map = {
+            "price": "주택 실거래 시세 ($)", "bedrooms": "침실 수", "bathrooms": "욕실 수",
+            "sqft_living": "실내 주거 면적 (sqft)", "sqft_lot": "대지 면적 (sqft)", "floors": "건물 층수",
+            "waterfront": "수변 조망 여부 (0/1)", "view": "전망 등급 (0~4)", "condition": "주택 관리 상태 (1~5)",
+            "grade": "건축 자재·시공 등급 (1~13)", "sqft_above": "지상층 면적 (sqft)", "sqft_basement": "지하실 면적 (sqft)",
+            "yr_built": "건축 준공연도", "yr_renovated": "리모델링 연도", "zipcode": "행정구역 우편번호",
+            "lat": "위도 좌표", "long": "경도 좌표", "sqft_living15": "인근 15가구 평균 주거면적",
+            "sqft_lot15": "인근 15가구 평균 대지면적", "building_age": "[파생] 건물 노후도 (년)",
+            "built_decade": "[파생] 건축 연대", "is_renovated": "[파생] 리모델링 여부",
+            "price_per_sqft": "[파생] 단위면적당 가격 ($/sqft)", "overvaluation_ratio": "[파생] 지역 시세 대비 고평가 지수",
+            "High_Risk": "[타깃] 고위험 부실우려 여부 (0/1)", "Risk_Label": "[타깃] 리스크 등급 라벨"
+        }
+        schema_df = pd.DataFrame({
+            "변수명 (Column)": df.columns,
+            "변수 설명": [var_desc_map.get(c, "기타 속성") for c in df.columns],
+            "데이터 타입": df.dtypes.astype(str).values,
+            "결측치 수": df.isnull().sum().values,
+            "결측률 (%)": (df.isnull().mean().values * 100).round(2),
+            "고유값 수 (Unique)": df.nunique().values
+        })
+        st.dataframe(schema_df, use_container_width=True, hide_index=True, height=280)
+
+    st.divider()
+
+    # 2-2. 4단계 전처리 및 파생변수 공학 설정
+    st.subheader("🛠️ 2) 전처리 파이프라인 및 금융 파생변수 설정")
     col1, col2 = st.columns(2)
     with col1:
-        st.subheader("1) 이상치(초고가 호화주택) 정제 설정")
+        st.markdown("**[Step 1] 데이터 클리닝 (중복·결측 정제)**")
+        drop_dup_opt = st.checkbox("중복 행(Duplicates) 자동 검출 및 제거", value=True)
+        missing_opt = st.selectbox("결측치(Missing Value) 처리 전략", ["중앙값(Median) 대체 (이상치 강건)", "평균값(Mean) 대체", "결측 행 삭제(Drop)"])
+
+        st.markdown("**[Step 2] 이상치(초고가 호화주택) 정제 설정**")
         outlier_opt = st.radio(
             "상위 초고가 주택 처리 방식 (서민·중산층 보증 기준 맞추기)",
-            ["제거 안 함 (원본 유지)", "상위 1% 초고가 이상치 제거 (권장)", "IQR(1.5배) 기준 이상치 제거"]
+            ["제거 안 함 (원본 유지)", "상위 1% 초고가 이상치 제거 (권장)", "IQR(1.5배) 기준 이상치 제거"],
+            index=1
         )
-        
-        st.subheader("2) 금융·부동산 파생변수 자동 생성")
-        add_ltv_proxy = st.checkbox("잠재 전세가율(담보부담률) 시뮬레이션 변수 생성", value=True)
-        add_loc_score = st.checkbox("입지 프리미엄 지수(수변·조망·등급 결합) 생성", value=True)
 
     with col2:
-        st.subheader("3) 모델 학습용 변수 선택 & 데이터 분할")
-        scale_opt = st.checkbox("StandardScaler 표준화 적용 (인공신경망·로지스틱 회귀 필수)", value=True)
-        test_ratio = st.slider("테스트(검증) 데이터 비율", 0.1, 0.4, 0.2, 0.05)
-        
-        default_features = ["bedrooms", "bathrooms", "sqft_living", "floors", "waterfront", "view", "condition", "grade", "building_age", "overvaluation_ratio"]
-        selected_features = st.multiselect("학습에 사용할 독립변수(X) 선택", default_features, default=default_features)
+        st.markdown("**[Step 3] 금융·부동산 도메인 파생변수 생성**")
+        add_ltv_proxy = st.checkbox("잠재 전세가율(estimated_ltv) 시뮬레이션 변수 생성", value=True)
+        add_loc_score = st.checkbox("입지 프리미엄 지수(location_premium) 생성", value=True)
+        add_space_ratio = st.checkbox("주거 공간 효율 비율(living_to_lot_ratio) 생성", value=True)
+
+        st.markdown("**[Step 4] 피처 스케일링 & 학습/검증 분할**")
+        scale_opt = st.checkbox("StandardScaler 표준화 적용 (평균 0, 분산 1 정규화)", value=True)
+        test_ratio = st.slider("테스트(검증) 데이터 분할 비율", 0.1, 0.4, 0.2, 0.05)
+
+    default_features = ["bedrooms", "bathrooms", "sqft_living", "floors", "waterfront", "view", "condition", "grade", "building_age", "overvaluation_ratio"]
+    selected_features = st.multiselect("최종 모델 투입 독립변수(X) 선택", default_features, default=default_features)
 
     if st.button("🚀 전처리 파이프라인 실행 및 데이터 확정", type="primary", use_container_width=True):
         df_p = df.copy()
         before_cnt = len(df_p)
 
+        # 중복 및 결측 처리
+        if drop_dup_opt:
+            df_p = df_p.drop_duplicates()
+        num_c = df_p.select_dtypes(include=[np.number]).columns
+        if missing_opt == "중앙값(Median) 대체 (이상치 강건)":
+            df_p[num_c] = df_p[num_c].fillna(df_p[num_c].median())
+        elif missing_opt == "평균값(Mean) 대체":
+            df_p[num_c] = df_p[num_c].fillna(df_p[num_c].mean())
+        else:
+            df_p = df_p.dropna()
+
+        # 이상치 제거
         if outlier_opt == "상위 1% 초고가 이상치 제거 (권장)":
             upper = df_p["price"].quantile(0.99)
             df_p = df_p[df_p["price"] <= upper]
@@ -339,6 +403,7 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
             iqr = q3 - q1
             df_p = df_p[(df_p["price"] >= q1 - 1.5 * iqr) & (df_p["price"] <= q3 + 1.5 * iqr)]
 
+        # 파생변수 생성
         final_features = list(selected_features)
         if add_ltv_proxy:
             np.random.seed(42)
@@ -347,22 +412,25 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
         if add_loc_score:
             df_p["location_premium"] = (df_p["waterfront"] * 3 + df_p["view"] + df_p["grade"] * 0.5).round(2)
             final_features.append("location_premium")
+        if add_space_ratio:
+            df_p["living_to_lot_ratio"] = (df_p["sqft_living"] / df_p["sqft_lot"].replace(0, 1)).round(3)
+            final_features.append("living_to_lot_ratio")
 
         st.session_state.df_processed = df_p
         st.session_state.features = final_features
         st.session_state.scale_opt = scale_opt
         st.session_state.test_ratio = test_ratio
 
-        st.success(f"✅ 전처리 완료! 원본 {before_cnt:,}건 → 정제 후 {len(df_p):,}건 (최종 투입 변수: {len(final_features)}개)")
+        st.success(f"✅ 전처리 파이프라인 완료! 원본 {before_cnt:,}건 → 정제 후 {len(df_p):,}건 (최종 학습 변수: {len(final_features)}개)")
 
         removed_cnt = before_cnt - len(df_p)
         train_cnt = int(len(df_p) * (1 - test_ratio))
         test_cnt = len(df_p) - train_cnt
 
         m1, m2, m3 = st.columns(3)
-        m1.metric("제거된 초고가 이상치", f"{removed_cnt:,} 건", f"원본 대비 {(removed_cnt/before_cnt)*100:.1f}% 정제")
-        m2.metric("AI 모델 학습용 데이터 (Train)", f"{train_cnt:,} 건", f"전체의 {(1-test_ratio)*100:.0f}%")
-        m3.metric("AI 모델 검증용 데이터 (Test)", f"{test_cnt:,} 건", f"전체의 {test_ratio*100:.0f}%")
+        m1.metric("제거된 이상치·중복 행", f"{removed_cnt:,} 건", f"원본 대비 {(removed_cnt/before_cnt)*100:.1f}% 정제")
+        m2.metric("학습용 데이터 (Train Set)", f"{train_cnt:,} 건", f"전체의 {(1-test_ratio)*100:.0f}%")
+        m3.metric("검증용 데이터 (Test Set)", f"{test_cnt:,} 건", f"전체의 {test_ratio*100:.0f}%")
 
         c_b1, c_b2 = st.columns(2)
         with c_b1:
@@ -372,8 +440,22 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
             fig_after = px.histogram(df_p, x="price", nbins=50, title="전처리 후(After) 정제된 담보 가격 분포", color_discrete_sequence=["#0d9488"])
             st.plotly_chart(fig_after, use_container_width=True)
 
-        st.subheader("📋 파생변수 생성 및 전처리 완료 데이터 샘플 (상위 10건)")
-        preview_cols = ["price", "building_age", "overvaluation_ratio"] + [c for c in ["estimated_ltv", "location_premium"] if c in df_p.columns] + ["Risk_Label"]
+        if scale_opt:
+            st.subheader("📏 스케일링(StandardScaler) 적용 전·후 변수 분포 비교")
+            scaler_preview = StandardScaler()
+            scaled_vals = scaler_preview.fit_transform(df_p[final_features])
+            scaled_df = pd.DataFrame(scaled_vals, columns=final_features)
+            comp_df = pd.DataFrame({
+                "변수명": final_features,
+                "적용 전 평균": df_p[final_features].mean().round(2).values,
+                "적용 전 표준편차": df_p[final_features].std().round(2).values,
+                "적용 후 평균": scaled_df.mean().round(2).values,
+                "적용 후 표준편차": scaled_df.std().round(2).values
+            })
+            st.dataframe(comp_df, use_container_width=True, hide_index=True)
+
+        st.subheader("📋 파생변수 결합 완료 최종 데이터 샘플 (상위 10건)")
+        preview_cols = ["price", "building_age", "overvaluation_ratio"] + [c for c in ["estimated_ltv", "location_premium", "living_to_lot_ratio"] if c in df_p.columns] + ["Risk_Label"]
         st.dataframe(df_p[preview_cols].head(10), use_container_width=True, hide_index=True)
 # =========================================================
 # 모듈 3: AI 심사 엔진 학습 및 검증 (로지스틱 · 의사결정나무 · 인공신경망)
