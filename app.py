@@ -65,7 +65,7 @@ def prepare_base_features(df_raw):
     
    # 타깃 변수 생성: 복합 리스크 스코어 + 현실적 시장·차주 불확실성(노이즈) 반영
     np.random.seed(42)
-    market_shock = np.random.normal(0, 1.1, len(df))
+    market_shock = np.random.normal(0, 0.8, len(df))
     risk_score = (
         (df["overvaluation_ratio"] > 1.15).astype(int) * 2.0 +
         (df["grade"] <= 6).astype(int) * 2.0 +
@@ -514,7 +514,7 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
             for name, m in model_dict.items():
                 m.fit(X_train_s, y_train)
                 y_prob = m.predict_proba(X_test_s)[:, 1]
-                y_pred = (y_prob >= 0.32).astype(int)
+                y_pred = (y_prob >= 0.42).astype(int)
                 acc = accuracy_score(y_test, y_pred)
                 prec = precision_score(y_test, y_pred, zero_division=0)
                 rec = recall_score(y_test, y_pred, zero_division=0)
