@@ -628,7 +628,11 @@ elif menu == "4. 개별 매물 심사 & 동적 보증료":
         "estimated_ltv": ltv_current,
         "location_premium": in_grade * 0.5
     }
-    input_df = pd.DataFrame([input_row])[st.session_state.features]
+    input_df = pd.DataFrame([input_row])
+    for col in st.session_state.features:
+        if col not in input_df.columns:
+            input_df[col] = st.session_state.X_train[col].mean() if "X_train" in st.session_state and col in st.session_state.X_train.columns else 0
+    input_df = input_df[st.session_state.features]
     input_s = st.session_state.scaler.transform(input_df) if st.session_state.scale_opt else input_df.values
 
     model = st.session_state.models[engine_choice]
