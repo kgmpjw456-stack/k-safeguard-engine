@@ -63,13 +63,17 @@ def prepare_base_features(df_raw):
     zip_avg = df.groupby("zipcode")["price_per_sqft"].transform("mean")
     df["overvaluation_ratio"] = (df["price_per_sqft"] / zip_avg).round(3)
     
+   # 타깃 변수 생성: 복합 리스크 스코어 + 현실적 시장·차주 불확실성(노이즈) 반영
+    np.random.seed(42)
+    market_shock = np.random.normal(0, 1.1, len(df))
     risk_score = (
-        (df["overvaluation_ratio"] > 1.15).astype(int) * 2 +
-        (df["building_age"] >= 40).astype(int) * 1 +
-        (df["grade"] <= 6).astype(int) * 2 +
-        (df["condition"] <= 2).astype(int) * 2
+        (df["overvaluation_ratio"] > 1.15).astype(int) * 2.0 +
+        (df["grade"] <= 6).astype(int) * 2.0 +
+        (df["condition"] <= 2).astype(int) * 2.0 +
+        (df["building_age"] >= 40).astype(int) * 1.0 +
+        market_shock
     )
-    df["High_Risk"] = (risk_score >= 3).astype(int)
+    df["High_Risk"] = (risk_score >= 3.0).astype(int)
     df["Risk_Label"] = np.where(df["High_Risk"] == 1, "고위험 매물(주의)", "안전 매물(정상)")
     return df
 
