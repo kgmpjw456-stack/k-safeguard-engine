@@ -174,12 +174,13 @@ if menu == "1. 포트폴리오 & 심층 EDA":
     map_filter = st.radio("지도 표시 필터", ["전체 매물 샘플 (3,000건)", "고위험 집중 경보 매물만 보기"], horizontal=True)
     df_map = df[df["High_Risk"] == 1] if map_filter == "고위험 집중 경보 매물만 보기" else df.sample(min(3000, len(df)), random_state=42)
     
-    fig_map = px.scatter_mapbox(
+    fig_map = px.scatter_map(
         df_map, lat="lat", lon="long", color="High_Risk", size="price",
         color_continuous_scale=["#0d9488", "#f59e0b", "#e11d48"],
         hover_data=["price", "sqft_living", "building_age", "grade", "overvaluation_ratio"],
-        zoom=9.2, height=480, mapbox_style="carto-positron",
+        zoom=9.2, height=480, map_style="carto-positron",
         title="위도·경도 기반 담보 리스크 공간 분포"
+    )
     )
     st.plotly_chart(fig_map, use_container_width=True)
 
