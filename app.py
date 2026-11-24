@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
@@ -49,22 +50,19 @@ def load_default_data():
 
 def prepare_base_features(df_raw):
     df = df_raw.copy()
-    # 불필요한 ID/날짜 정리
     if "id" in df.columns:
         df = df.drop(columns=["id"])
     if "date" in df.columns:
         df = df.drop(columns=["date"])
     
-    # 기준연도(2015) 대비 건물 노후도(연식) 기본 계산
-    df["building_age"] = 2015 - df["yr_built"]
+    df["building_age"] = (2015 - df["yr_built"]).clip(lower=0)
+    df["built_decade"] = (df["yr_built"] // 10) * 10
     df["is_renovated"] = np.where(df["yr_renovated"] > 0, 1, 0)
     df["price_per_sqft"] = df["price"] / df["sqft_living"]
     
-    # 우편번호(zipcode)별 평균 시세 대비 고평가 비율 (깡통전세·고평가 리스크 핵심 지표)
     zip_avg = df.groupby("zipcode")["price_per_sqft"].transform("mean")
     df["overvaluation_ratio"] = (df["price_per_sqft"] / zip_avg).round(3)
     
-    # 실전 타깃(High_Risk): 노후화(35년 이상) + 낮은 등급(7 미만) + 고평가/상태불량 복합 리스크 매물 정의
     risk_score = (
         (df["overvaluation_ratio"] > 1.15).astype(int) * 2 +
         (df["building_age"] >= 40).astype(int) * 1 +
@@ -72,9 +70,9 @@ def prepare_base_features(df_raw):
         (df["condition"] <= 2).astype(int) * 2
     )
     df["High_Risk"] = (risk_score >= 3).astype(int)
+    df["Risk_Label"] = np.where(df["High_Risk"] == 1, "고위험 매물(주의)", "안전 매물(정상)")
     return df
 
-# 세션 상태 초기화
 if "df_raw" not in st.session_state:
     try:
         st.session_state.df_raw = load_default_data()
@@ -130,77 +128,161 @@ if df is None:
     st.stop()
 
 # =========================================================
-# 모듈 1: 포트폴리오 & 심층 EDA (5단계)
+# 모듈 1: 포트폴리오 & 심층 EDA (완전 업그레이드 버전)
 # =========================================================
 if menu == "1. 포트폴리오 & 심층 EDA":
     st.header("📊 1. 보증 포트폴리오 현황 및 심층 데이터 탐색 (Deep EDA)")
     
     # 1-1. 금융 KPI 스코어카드
-    total_assets = df["price"].sum() / 1e8  # 억 달러 단위 환산 표기
+    total_assets = df["price"].sum() / 1e8
     avg_price = df["price"].mean()
     risk_rate = df["High_Risk"].mean() * 100
     missing_cnt = df.isnull().sum().sum()
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("총 보증 대상 담보가치", f"${total_assets:,.1f} 억", "전체 21,613건 기준")
+    c1.metric("총 보증 대상 담보가치", f"${total_assets:,.1f} 억", f"전체 {len(df):,}건 기준")
     c2.metric("평균 주택 담보 시세", f"${avg_price:,.0f}", f"중위값 ${df['price'].median():,.0f}")
     c3.metric("잠재 고위험(부실우려) 비중", f"{risk_rate:.1f}%", f"{df['High_Risk'].sum():,}건 탐지", delta_color="inverse")
     c4.metric("데이터 무결성 (결측치)", f"{missing_cnt} 건", "품질 점수 99.8점")
 
+    # 자동 인사이트 요약 브리핑
+    safe_age = df[df["High_Risk"] == 0]["building_age"].median()
+    risk_age = df[df["High_Risk"] == 1]["building_age"].median()
+    safe_over = df[df["High_Risk"] == 0]["overvaluation_ratio"].median()
+    risk_over = df[df["High_Risk"] == 1]["overvaluation_ratio"].median()
+    st.info(
+        f"💡 **핵심 포트폴리오 진단 브리핑:** 고위험 매물군은 안전 매물군 대비 건물 노후도(중위값)가 **{risk_age - safe_age:.0f}년 더 오래되었으며** "
+        f"({safe_age:.0f}년 → {risk_age:.0f}년), 동일 행정구역 시세 대비 고평가 비율이 **{(risk_over - safe_over)*100:.1f}%p 더 높게** 형성되어 있습니다."
+    )
+
+    # 1-2. 데이터 요약 & 기초 통계량 (접이식/탭 구성으로 깔끔하게 정리)
+    with st.expander("📋 원본 데이터 미리보기 및 기초 통계량(기술통계) 상세 확인", expanded=False):
+        tab_stat, tab_raw = st.tabs(["기초 통계량 요약표", "실거래 데이터 샘플 (상위 50건)"])
+        with tab_stat:
+            desc_cols = ["price", "bedrooms", "bathrooms", "sqft_living", "floors", "grade", "condition", "building_age", "overvaluation_ratio"]
+            desc_df = df[desc_cols].describe().T[["count", "mean", "std", "min", "50%", "max"]].round(2)
+            desc_df.columns = ["데이터 수", "평균", "표준편차", "최솟값", "중위값(50%)", "최댓값"]
+            st.dataframe(desc_df, use_container_width=True)
+        with tab_raw:
+            st.dataframe(df.head(50), use_container_width=True)
+
     st.divider()
 
-    # 1-2. 타깃(고위험군 vs 안전군) 비교 심층 분석
-    st.subheader("🔍 [심층 비교] 고위험 매물(1) vs 안전 매물(0) 핵심 특성 분포")
+    # 1-3. 타깃(고위험군 vs 안전군) 비교 심층 분석
+    st.subheader("🔍 [심층 비교 1] 고위험 매물 vs 안전 매물 핵심 특성 분포")
     col_a, col_b = st.columns(2)
     with col_a:
         fig_violin1 = px.violin(
-            df, x="High_Risk", y="building_age", color="High_Risk", box=True,
-            color_discrete_map={0: "#0d9488", 1: "#e11d48"},
-            labels={"High_Risk": "리스크 등급 (0:안전, 1:고위험)", "building_age": "건물 노후도 (년)"},
+            df, x="Risk_Label", y="building_age", color="Risk_Label", box=True,
+            color_discrete_map={"안전 매물(정상)": "#0d9488", "고위험 매물(주의)": "#e11d48"},
+            labels={"Risk_Label": "리스크 등급", "building_age": "건물 노후도 (년)"},
             title="건물 노후도(연식)에 따른 리스크 분포 차이"
         )
+        fig_violin1.update_traces(spanmode="hard")
+        fig_violin1.update_layout(showlegend=False)
         st.plotly_chart(fig_violin1, use_container_width=True)
     with col_b:
+        df_clip_over = df[df["overvaluation_ratio"] <= 2.2]
         fig_violin2 = px.violin(
-            df, x="High_Risk", y="overvaluation_ratio", color="High_Risk", box=True,
-            color_discrete_map={0: "#0d9488", 1: "#e11d48"},
-            labels={"High_Risk": "리스크 등급 (0:안전, 1:고위험)", "overvaluation_ratio": "지역 시세 대비 고평가 지수"},
-            title="지역 평균 대비 고평가 비율 분포 차이"
+            df_clip_over, x="Risk_Label", y="overvaluation_ratio", color="Risk_Label", box=True,
+            color_discrete_map={"안전 매물(정상)": "#0d9488", "고위험 매물(주의)": "#e11d48"},
+            labels={"Risk_Label": "리스크 등급", "overvaluation_ratio": "지역 시세 대비 고평가 지수 (1.0=평균)"},
+            title="지역 평균 대비 고평가 비율 분포 차이 (핵심 구간 확대)"
         )
+        fig_violin2.update_traces(spanmode="hard")
+        fig_violin2.update_layout(showlegend=False)
         st.plotly_chart(fig_violin2, use_container_width=True)
 
-    # 1-3. 공간(GIS) 담보가치 & 리스크 지도
-    st.subheader("🗺️ [공간 GIS 탐색] 지역별 담보 시세 및 고위험 집중 구역 지도")
-    map_filter = st.radio("지도 표시 필터", ["전체 매물 샘플 (3,000건)", "고위험 집중 경보 매물만 보기"], horizontal=True)
-    df_map = df[df["High_Risk"] == 1] if map_filter == "고위험 집중 경보 매물만 보기" else df.sample(min(3000, len(df)), random_state=42)
-    
-    fig_map = px.scatter_map(
-        df_map, lat="lat", lon="long", color="High_Risk", size="price",
-        color_continuous_scale=["#0d9488", "#f59e0b", "#e11d48"],
-        hover_data=["price", "sqft_living", "building_age", "grade", "overvaluation_ratio"],
-        zoom=9.2, height=480, map_style="carto-positron",
-        title="위도·경도 기반 담보 리스크 공간 분포"
-    )
-    st.plotly_chart(fig_map, use_container_width=True)
+    # 1-4. [신규 추가] 건축연대별 시세·위험률 추이 & 등급×상태 리스크 매트릭스
+    st.subheader("📈 [심층 비교 2] 건축연대별 리스크 추이 & 등급·관리상태 교차 위험 매트릭스")
+    col_c1, col_c2 = st.columns(2)
+    with col_c1:
+        decade_df = df.groupby("built_decade").agg(
+            avg_price=("price", "mean"),
+            risk_pct=("High_Risk", lambda x: x.mean() * 100),
+            cnt=("price", "count")
+        ).reset_index()
+        fig_combo = make_subplots(specs=[[{"secondary_y": True}]])
+        fig_combo.add_trace(
+            go.Bar(x=decade_df["built_decade"].astype(str) + "년대", y=decade_df["avg_price"], name="평균 주택 시세 ($)", marker_color="#93c5fd"),
+            secondary_y=False
+        )
+        fig_combo.add_trace(
+            go.Scatter(x=decade_df["built_decade"].astype(str) + "년대", y=decade_df["risk_pct"], name="고위험 매물 비중 (%)", mode="lines+markers", line=dict(color="#e11d48", width=3)),
+            secondary_y=True
+        )
+        fig_combo.update_layout(title="건축연대별 평균 담보 시세 vs 고위험 비중(%) 추이", legend=dict(orientation="h", y=1.12))
+        fig_combo.update_yaxes(title_text="평균 시세 ($)", secondary_y=False)
+        fig_combo.update_yaxes(title_text="고위험 비중 (%)", secondary_y=True)
+        st.plotly_chart(fig_combo, use_container_width=True)
 
-    # 1-4. 4차원 다변량 버블 탐색기
+    with col_c2:
+        matrix_df = df.pivot_table(index="grade", columns="condition", values="High_Risk", aggfunc="mean") * 100
+        fig_matrix = px.imshow(
+            matrix_df, text_auto=".1f", color_continuous_scale="YlOrRd", aspect="auto",
+            labels={"x": "주택 관리 상태 (1:불량 ~ 5:최상)", "y": "건축 등급 (Grade)", "color": "고위험률(%)"},
+            title="건축 등급 × 관리 상태별 부실 위험률(%) 매트릭스"
+        )
+        st.plotly_chart(fig_matrix, use_container_width=True)
+
+    # 1-5. 공간(GIS) 담보가치 & 리스크 지도 + 행정구역별 위험 TOP 15
+    st.subheader("🗺️ [공간 GIS 탐색] 지역별 담보 리스크 지도 및 고위험 집중 구역 TOP 15")
+    map_col1, map_col2 = st.columns([1.4, 1])
+    with map_col1:
+        map_filter = st.radio("지도 표시 필터", ["전체 매물 샘플 (3,000건)", "고위험 집중 경보 매물만 보기"], horizontal=True)
+        df_map = df[df["High_Risk"] == 1] if map_filter == "고위험 집중 경보 매물만 보기" else df.sample(min(3000, len(df)), random_state=42)
+        
+        fig_map = px.scatter_map(
+            df_map, lat="lat", lon="long", color="Risk_Label", size="price",
+            color_discrete_map={"안전 매물(정상)": "#0d9488", "고위험 매물(주의)": "#e11d48"},
+            hover_data={"lat": False, "long": False, "zipcode": True, "price": ":$,.0f", "building_age": True, "grade": True, "overvaluation_ratio": True},
+            center={"lat": df["lat"].mean(), "lon": df["long"].mean()},
+            zoom=9.0, height=500, map_style="carto-positron",
+            title="King County 행정구역별 담보 리스크 공간 분포"
+        )
+        st.plotly_chart(fig_map, use_container_width=True)
+
+    with map_col2:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        zip_risk = df.groupby("zipcode").agg(
+            total_cnt=("High_Risk", "count"),
+            risk_rate=("High_Risk", lambda x: round(x.mean() * 100, 1)),
+            avg_price=("price", "mean")
+        ).reset_index()
+        zip_top15 = zip_risk[zip_risk["total_cnt"] >= 50].sort_values("risk_rate", ascending=True).tail(15)
+        zip_top15["zipcode_str"] = "우편번호 " + zip_top15["zipcode"].astype(str)
+        fig_zip = px.bar(
+            zip_top15, x="risk_rate", y="zipcode_str", orientation="h",
+            text="risk_rate", color="risk_rate", color_continuous_scale="Reds",
+            labels={"risk_rate": "고위험 매물 비중 (%)", "zipcode_str": "행정구역"},
+            title="보증사고 위험 집중 우편번호 TOP 15"
+        )
+        fig_zip.update_traces(texttemplate="%{text}%", textposition="outside")
+        fig_zip.update_layout(height=500, coloraxis_showscale=False)
+        st.plotly_chart(fig_zip, use_container_width=True)
+
+    # 1-6. 4차원 다변량 버블 탐색기
     st.subheader("🫧 [다변량 탐색] 면적 · 시세 · 주택등급 · 리스크 4차원 상호작용")
     sample_df = df.sample(min(1500, len(df)), random_state=42)
     fig_bubble = px.scatter(
-        sample_df, x="sqft_living", y="price", color="High_Risk", size="grade",
-        color_continuous_scale=["#0d9488", "#e11d48"],
-        labels={"sqft_living": "주거 면적 (sqft)", "price": "주택 시세 ($)", "High_Risk": "고위험 여부"},
-        title="주거 면적 vs 시세 (원 크기: 주택 등급 / 색상: 고위험 여부)"
+        sample_df, x="sqft_living", y="price", color="Risk_Label", size="grade",
+        color_discrete_map={"안전 매물(정상)": "#0d9488", "고위험 매물(주의)": "#e11d48"},
+        labels={"sqft_living": "주거 면적 (sqft)", "price": "주택 시세 ($)", "Risk_Label": "리스크 등급"},
+        title="주거 면적 vs 시세 (원 크기: 주택 등급 / 색상: 리스크 등급)"
     )
     st.plotly_chart(fig_bubble, use_container_width=True)
 
-    # 1-5. 상관관계 & 다중공선성(VIF) 정밀 진단
+    # 1-7. 상관관계 & 다중공선성(VIF) 정밀 진단
     st.subheader("📐 [통계 정밀 진단] 상관관계 히트맵 및 다중공선성(VIF) 경고")
     c_left, c_right = st.columns([1.3, 1])
     num_cols = ["price", "bedrooms", "bathrooms", "sqft_living", "floors", "grade", "building_age", "overvaluation_ratio", "High_Risk"]
     with c_left:
         corr = df[num_cols].corr()
-        fig_heat = px.imshow(corr, text_auto=".2f", color_continuous_scale="RdBu_r", title="주요 리스크 변수 간 상관계수")
+        fig_heat = px.imshow(
+            corr, text_auto=".2f", color_continuous_scale="RdBu_r", aspect="auto",
+            title="주요 리스크 변수 간 상관계수"
+        )
+        fig_heat.update_layout(height=480)
         st.plotly_chart(fig_heat, use_container_width=True)
     with c_right:
         st.markdown("**다중공선성(VIF) 자동 진단표** *(로지스틱 회귀 안정성 검증)*")
@@ -245,7 +327,6 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
         df_p = df.copy()
         before_cnt = len(df_p)
 
-        # 이상치 처리
         if outlier_opt == "상위 1% 초고가 이상치 제거 (권장)":
             upper = df_p["price"].quantile(0.99)
             df_p = df_p[df_p["price"] <= upper]
@@ -255,10 +336,8 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
             df_p = df_p[(df_p["price"] >= q1 - 1.5 * iqr) & (df_p["price"] <= q3 + 1.5 * iqr)]
 
         final_features = list(selected_features)
-        # 파생변수 생성
         if add_ltv_proxy:
             np.random.seed(42)
-            # 시세 대비 보증금 비율(전세가율) 현실적 분포 생성 (고평가 매물일수록 전세가율 상승 반영)
             df_p["estimated_ltv"] = np.clip(0.55 + (df_p["overvaluation_ratio"] - 1.0) * 0.4 + np.random.normal(0, 0.08, len(df_p)), 0.3, 0.98).round(3)
             final_features.append("estimated_ltv")
         if add_loc_score:
@@ -272,7 +351,6 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
 
         st.success(f"✅ 전처리 완료! 원본 {before_cnt:,}건 → 정제 후 {len(df_p):,}건 (최종 투입 변수: {len(final_features)}개)")
 
-        # 전처리 전/후 비교 그래프
         c_b1, c_b2 = st.columns(2)
         with c_b1:
             fig_before = px.histogram(df, x="price", nbins=50, title="전처리 전(Before) 주택 가격 분포", color_discrete_sequence=["#94a3b8"])
@@ -372,7 +450,6 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
 
         col_r1, col_r2 = st.columns(2)
         with col_r1:
-            # 다각형 레이더 차트 (예시와 차별화된 시각화)
             radar_fig = go.Figure()
             metrics_cols = ["Accuracy (정확도)", "Precision (정밀도)", "Recall (재현율/부실탐지율)", "F1-Score", "ROC-AUC"]
             for _, row in res_df.iterrows():
@@ -388,7 +465,6 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
         with col_r2:
             st.plotly_chart(st.session_state.roc_fig, use_container_width=True)
 
-        # 감사 대응용 변수 중요도 & 혼동행렬
         col_b1, col_b2 = st.columns(2)
         with col_b1:
             dt_model = st.session_state.models["Decision Tree"]
@@ -434,7 +510,6 @@ elif menu == "4. 개별 매물 심사 & 동적 보증료":
         in_bed = st.number_input("침실 수", 1, 8, 3)
         in_bath = st.number_input("욕실 수", 1.0, 6.0, 2.0, 0.5)
 
-    # 입력값 구성
     ltv_current = in_deposit / in_price
     input_row = {
         "bedrooms": in_bed,
@@ -454,21 +529,19 @@ elif menu == "4. 개별 매물 심사 & 동적 보증료":
     input_s = st.session_state.scaler.transform(input_df) if st.session_state.scale_opt else input_df.values
 
     model = st.session_state.models[engine_choice]
-    pd_prob = float(model.predict_proba(input_s)[0][1])  # 부실 확률(PD)
+    pd_prob = float(model.predict_proba(input_s)[0][1])
     
-    # 금융공학 기대손실(EL = PD * LGD * EAD) 및 동적 보증료 계산
-    lgd = max(0.15, min(0.65, (ltv_current - 0.5) * 0.8 + 0.2))  # 손실률(LGD)
-    ead = in_deposit  # 보증금액(EAD)
+    lgd = max(0.15, min(0.65, (ltv_current - 0.5) * 0.8 + 0.2))
+    ead = in_deposit
     expected_loss = pd_prob * lgd * ead
-    base_fee_rate = 0.0015  # 기본 보증료 0.15%
-    dynamic_fee_rate = (expected_loss / ead) + base_fee_rate  # 손익분기 동적 보증료율
-    safe_limit = in_price * max(0.50, 0.85 - pd_prob * 0.4)  # AI 권고 안전 보증 한도
+    base_fee_rate = 0.0015
+    dynamic_fee_rate = (expected_loss / ead) + base_fee_rate
+    safe_limit = in_price * max(0.50, 0.85 - pd_prob * 0.4)
 
     st.divider()
     res_c1, res_c2 = st.columns([1, 1.3])
     
     with res_c1:
-        # 위험도 계기판(Gauge) 차트
         fig_gauge = go.Figure(go.Indicator(
             mode="gauge+number",
             value=pd_prob * 100,
@@ -522,7 +595,6 @@ elif menu == "5. 거시경제 스트레스 테스트":
     with col_s2:
         ltv_cap = st.slider("정책 개입: 보증 한도(LTV) 상한 규제 (%)", 60, 90, 80, 5)
 
-    # 시나리오별 손실 계산 (하락률 0% ~ 35% 곡선 생성)
     drops = list(range(0, 40, 5))
     loss_no_policy = []
     loss_with_ai = []
@@ -532,11 +604,9 @@ elif menu == "5. 거시경제 스트레스 테스트":
 
     for d in drops:
         shocked_price = df_p["price"] * (1 - d / 100)
-        # 기존 방식: 시세가 보증금보다 낮아지면 깡통전세 대위변제 손실 발생
         shortfall_old = np.maximum(0, deposit_amt - shocked_price)
-        loss_no_policy.append(shortfall_old.sum() / 1e6)  # 백만 달러 단위
+        loss_no_policy.append(shortfall_old.sum() / 1e6)
 
-        # AI 동적 한도 적용 방식: 고위험군 및 LTV 상한 규제 적용
         capped_deposit = np.minimum(deposit_amt, df_p["price"] * (ltv_cap / 100))
         capped_deposit = np.where(df_p["High_Risk"] == 1, capped_deposit * 0.85, capped_deposit)
         shortfall_new = np.maximum(0, capped_deposit - shocked_price)
