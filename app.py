@@ -181,7 +181,6 @@ if menu == "1. 포트폴리오 & 심층 EDA":
         zoom=9.2, height=480, map_style="carto-positron",
         title="위도·경도 기반 담보 리스크 공간 분포"
     )
-    )
     st.plotly_chart(fig_map, use_container_width=True)
 
     # 1-4. 4차원 다변량 버블 탐색기
