@@ -575,7 +575,9 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
 
         with col_b2:
             sel_cm_model = st.selectbox("혼동행렬(Confusion Matrix) 확인할 모델 선택", list(st.session_state.models.keys()))
-            cm = confusion_matrix(st.session_state.y_test, st.session_state.models[sel_cm_model].predict(st.session_state.X_test_s))
+            cm_prob = st.session_state.models[sel_cm_model].predict_proba(st.session_state.X_test_s)[:, 1]
+            cm_pred = (cm_prob >= 0.35).astype(int)
+            cm = confusion_matrix(st.session_state.y_test, cm_pred)
             fig_cm = px.imshow(
                 cm, text_auto=True, color_continuous_scale="Blues",
                 x=["예측: 안전(0)", "예측: 고위험(1)"], y=["실제: 안전(0)", "실제: 고위험(1)"],
