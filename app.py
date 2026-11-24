@@ -548,7 +548,13 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
         res_df = st.session_state.results_df
         st.subheader("📋 모델 성능 종합 비교표")
         st.dataframe(res_df, use_container_width=True, hide_index=True)
-
+        perf_csv = res_df.to_csv(index=False).encode("utf-8-sig")
+        st.download_button(
+            label="📊 AI 모델별 성능 비교 성적표 (CSV) 다운로드",
+            data=perf_csv,
+            file_name="K_SafeGuard_Model_Benchmark_Report.csv",
+            mime="text/csv"
+        )
         col_r1, col_r2 = st.columns(2)
         with col_r1:
             radar_fig = go.Figure()
