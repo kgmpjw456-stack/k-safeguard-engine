@@ -13,7 +13,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 # ---------------------------------------------------------
-# 0. 페이지 기본 설정 & 커스텀 디자인 시스템 (Indigo-Violet Fintech UI)
+# 0. 페이지 기본 설정 & 커스텀 디자인 시스템 (Forest Emerald & Slate UI)
 # ---------------------------------------------------------
 st.set_page_config(page_title="K-SafeGuard | 주택담보 리스크 인텔리전스", layout="wide")
 
@@ -25,139 +25,158 @@ st.markdown("""
         font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
     }
 
-    /* 전체 배경: 은은한 쿨 라벤더-슬레이트 톤 */
+    /* 전체 배경: 차분하고 따뜻한 아이보리-슬레이트 그레이 */
     .stApp {
-        background: linear-gradient(180deg, #F4F3FF 0%, #F8FAFC 35%, #F1F5F9 100%) !important;
-        color: #1E1B4B !important;
+        background-color: #F6F7F6 !important;
+        color: #14241E !important;
     }
     header[data-testid="stHeader"] {
-        background-color: rgba(244, 243, 255, 0.85) !important;
+        background-color: rgba(246, 247, 246, 0.88) !important;
         backdrop-filter: blur(8px);
     }
 
-    /* 시그니처 포인트 컬러: 일렉트릭 인디고 & 바이올렛 */
+    /* 시그니처 포인트 컬러: 딥 포레스트 에메랄드 */
     :root {
-        --primary-color: #4F46E5 !important;
+        --primary-color: #065F46 !important;
     }
 
-    /* 사이드바 스타일링 */
+    /* 사이드바 스타일링: 다크 슬레이트 포인트 & 카드 메뉴 */
     section[data-testid="stSidebar"] {
         background-color: #FFFFFF !important;
-        border-right: 1px solid #E0E7FF !important;
-        box-shadow: 4px 0 15px rgba(30, 27, 75, 0.03);
+        border-right: 1px solid #E2E8E5 !important;
+        box-shadow: 4px 0 18px rgba(15, 35, 28, 0.03);
     }
     section[data-testid="stSidebar"] .stRadio > div {
-        gap: 0.4rem;
+        gap: 0.45rem;
     }
     section[data-testid="stSidebar"] .stRadio label {
-        background-color: #F8FAFC;
-        border: 1px solid #E2E8F0;
-        border-radius: 10px;
-        padding: 0.65rem 0.9rem !important;
+        background-color: #F8FAF9;
+        border: 1px solid #E2E8E5;
+        border-radius: 8px;
+        padding: 0.7rem 0.95rem !important;
         transition: all 0.2s ease;
-        font-weight: 500;
+        font-weight: 600;
+        color: #1E293B;
     }
     section[data-testid="stSidebar"] .stRadio label:hover {
-        border-color: #6366F1;
-        background-color: #EEF2FF;
+        border-color: #059669;
+        background-color: #ECFDF5;
+        color: #064E3B;
     }
 
-    /* 버튼 스타일링: 그라데이션 & 호버 입체감 */
+    /* 버튼 스타일링: 딥 에메랄드 메탈릭 톤 */
     div.stButton > button:first-child,
     div.stDownloadButton > button {
-        background: linear-gradient(135deg, #4F46E5 0%, #6D28D9 100%) !important;
+        background: linear-gradient(135deg, #064E3B 0%, #047857 100%) !important;
         color: #FFFFFF !important;
         border: none !important;
-        border-radius: 10px !important;
-        padding: 0.6rem 1.2rem !important;
+        border-radius: 8px !important;
+        padding: 0.62rem 1.25rem !important;
         font-weight: 600 !important;
         letter-spacing: -0.01em;
-        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25) !important;
+        box-shadow: 0 4px 12px rgba(6, 78, 59, 0.22) !important;
         transition: all 0.2s ease !important;
     }
     div.stButton > button:first-child:hover,
     div.stDownloadButton > button:hover {
         transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35) !important;
+        box-shadow: 0 6px 16px rgba(6, 78, 59, 0.32) !important;
     }
 
-    /* KPI 메트릭 카드: 상단 바이올렛 액센트 라인 + 글래스 카드 */
+    /* KPI 메트릭 카드: 좌측 에메랄드 인디케이터 바 + 화이트 카드 */
     div[data-testid="stMetric"] {
         background-color: #FFFFFF !important;
-        border: 1px solid #E0E7FF !important;
-        border-top: 4px solid #4F46E5 !important;
-        padding: 1.15rem 1.3rem !important;
-        border-radius: 12px !important;
-        box-shadow: 0 4px 14px rgba(30, 27, 75, 0.04) !important;
+        border: 1px solid #E2E8E5 !important;
+        border-left: 5px solid #059669 !important;
+        padding: 1.15rem 1.35rem !important;
+        border-radius: 10px !important;
+        box-shadow: 0 2px 10px rgba(15, 35, 28, 0.035) !important;
     }
     div[data-testid="stMetric"] label {
-        color: #64748B !important;
-        font-size: 0.85rem !important;
+        color: #52605B !important;
+        font-size: 0.84rem !important;
         font-weight: 600 !important;
     }
     div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
-        color: #1E1B4B !important;
+        color: #111827 !important;
         font-weight: 800 !important;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.025em;
     }
 
-    /* 히어로 상단 배너 */
+    /* 히어로 상단 배너: 딥 차콜 포레스트 + 앰버 골드 포인트 */
     .hero-banner {
-        background: linear-gradient(125deg, #1E1B4B 0%, #312E81 55%, #4C1D95 100%);
+        background: linear-gradient(120deg, #0B1915 0%, #132E25 55%, #064E3B 100%);
         padding: 2rem 2.4rem;
-        border-radius: 16px;
+        border-radius: 14px;
         margin-bottom: 1.8rem;
-        box-shadow: 0 10px 25px -5px rgba(30, 27, 75, 0.22);
-        position: relative;
-        overflow: hidden;
-        border: 1px solid rgba(165, 180, 252, 0.2);
+        box-shadow: 0 12px 28px -6px rgba(11, 25, 21, 0.25);
+        border: 1px solid rgba(52, 211, 153, 0.2);
+    }
+    .hero-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
     }
     .hero-badge {
         display: inline-block;
-        background: rgba(129, 140, 248, 0.2);
-        color: #C7D2FE;
-        border: 1px solid rgba(165, 180, 252, 0.35);
-        padding: 0.25rem 0.75rem;
-        border-radius: 999px;
-        font-size: 0.75rem;
+        background: rgba(16, 185, 129, 0.16);
+        color: #6EE7B7;
+        border: 1px solid rgba(52, 211, 153, 0.35);
+        padding: 0.25rem 0.8rem;
+        border-radius: 4px;
+        font-size: 0.74rem;
         font-weight: 700;
-        letter-spacing: 0.06em;
-        margin-bottom: 0.7rem;
+        letter-spacing: 0.08em;
+    }
+    .hero-status {
+        font-size: 0.78rem;
+        color: #D97706;
+        background: rgba(217, 119, 6, 0.15);
+        border: 1px solid rgba(245, 158, 11, 0.35);
+        padding: 0.22rem 0.7rem;
+        border-radius: 4px;
+        font-weight: 600;
     }
     .hero-banner h1 {
-        font-size: 1.75rem !important;
+        font-size: 1.72rem !important;
         font-weight: 800 !important;
         margin: 0 0 0.45rem 0 !important;
         letter-spacing: -0.025em;
         color: #FFFFFF !important;
     }
     .hero-banner p {
-        font-size: 0.95rem !important;
-        color: #CBD5E1 !important;
+        font-size: 0.94rem !important;
+        color: #A7F3D0 !important;
+        opacity: 0.85;
         margin: 0 !important;
     }
 
-    /* 섹션 타이틀 카드 */
+    /* 섹션 타이틀 헤더 */
     .section-header-box {
         background: #FFFFFF;
-        border-left: 5px solid #4F46E5;
+        border: 1px solid #E2E8E5;
+        border-bottom: 3px solid #065F46;
         padding: 1rem 1.4rem;
-        border-radius: 0 12px 12px 0;
+        border-radius: 10px;
         margin-bottom: 1.4rem;
-        box-shadow: 0 2px 8px rgba(30, 27, 75, 0.03);
+        box-shadow: 0 2px 6px rgba(15, 35, 28, 0.025);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
     .section-tag {
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: #4F46E5;
+        font-size: 0.74rem;
+        font-weight: 800;
+        color: #059669;
         letter-spacing: 0.08em;
         text-transform: uppercase;
         margin-bottom: 0.2rem;
     }
     .section-title {
-        font-size: 1.35rem;
+        font-size: 1.32rem;
         font-weight: 800;
-        color: #1E1B4B;
+        color: #111827;
         margin: 0;
         letter-spacing: -0.02em;
     }
@@ -166,37 +185,42 @@ st.markdown("""
     .login-card {
         background: #FFFFFF;
         padding: 2.2rem;
-        border-radius: 16px;
-        border: 1px solid #E0E7FF;
-        box-shadow: 0 10px 25px rgba(30, 27, 75, 0.06);
+        border-radius: 14px;
+        border: 1px solid #D1FAE5;
+        border-top: 5px solid #065F46;
+        box-shadow: 0 12px 28px rgba(15, 35, 28, 0.07);
         margin-top: 1rem;
     }
 
     /* 탭 & 익스팬더 정돈 */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: #EEF2FF;
-        padding: 6px;
-        border-radius: 10px;
+        gap: 6px;
+        background-color: #E6ECE9;
+        padding: 5px;
+        border-radius: 8px;
     }
     .stTabs [data-baseweb="tab"] {
-        border-radius: 8px;
+        border-radius: 6px;
         font-weight: 600;
-        color: #4338CA;
+        color: #374151;
     }
     .stTabs [aria-selected="true"] {
         background-color: #FFFFFF !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        color: #064E3B !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.06);
     }
     div[data-testid="stExpander"] {
         background-color: #FFFFFF !important;
-        border: 1px solid #E0E7FF !important;
-        border-radius: 12px !important;
+        border: 1px solid #E2E8E5 !important;
+        border-radius: 10px !important;
     }
 </style>
 
 <div class="hero-banner">
-    <div class="hero-badge">PROPTECH RISK INTELLIGENCE // DYNAMIC PRICING</div>
+    <div class="hero-top-row">
+        <span class="hero-badge">REAL ESTATE RISK ANALYTICS // v2.4</span>
+        <span class="hero-status">UNDERWRITING & STRESS ENGINE</span>
+    </div>
     <h1>K-SafeGuard | 주택담보 리스크 평가 및 동적 보증료 산정 플랫폼</h1>
     <p>Mortgage Default Risk Scoring, Explainable Underwriting & Macro Stress Simulation</p>
 </div>
@@ -205,8 +229,10 @@ st.markdown("""
 def render_section_header(tag, title):
     st.markdown(f"""
     <div class="section-header-box">
-        <div class="section-tag">{tag}</div>
-        <div class="section-title">{title}</div>
+        <div>
+            <div class="section-tag">{tag}</div>
+            <div class="section-title">{title}</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -218,9 +244,9 @@ if not st.session_state.authenticated:
     with col2:
         st.markdown("""
         <div class="login-card">
-            <div style="font-size:0.78rem; font-weight:700; color:#4F46E5; letter-spacing:0.06em; margin-bottom:0.3rem;">ACCESS CONTROL</div>
-            <h3 style="margin:0 0 0.5rem 0; color:#1E1B4B; font-weight:800;">리스크 관제 시스템 인증</h3>
-            <p style="font-size:0.88rem; color:#64748B; margin-bottom:1.2rem;">인가된 심사역 및 분석 담당자 전용 환경입니다. 접속 코드를 입력해 주세요.</p>
+            <div style="font-size:0.75rem; font-weight:800; color:#059669; letter-spacing:0.08em; margin-bottom:0.3rem;">SECURITY GATEWAY</div>
+            <h3 style="margin:0 0 0.5rem 0; color:#111827; font-weight:800;">리스크 관제 시스템 인증</h3>
+            <p style="font-size:0.88rem; color:#4B5563; margin-bottom:1.2rem;">인가된 심사역 및 분석 담당자 전용 환경입니다. 접속 코드를 입력해 주세요.</p>
         </div>
         """, unsafe_allow_html=True)
         pwd = st.text_input("접속 비밀번호", type="password", placeholder="비밀번호 입력 (kmis)", label_visibility="collapsed")
@@ -285,9 +311,9 @@ if "models" not in st.session_state:
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("""
-    <div style="padding: 0.4rem 0 0.8rem 0; border-bottom: 1px solid #E0E7FF; margin-bottom: 1rem;">
-        <div style="font-size: 0.72rem; font-weight: 800; color: #4F46E5; letter-spacing: 0.08em;">NAVIGATION</div>
-        <div style="font-size: 1.1rem; font-weight: 800; color: #1E1B4B;">업무 프로세스 선택</div>
+    <div style="padding: 0.4rem 0 0.8rem 0; border-bottom: 1px solid #E2E8E5; margin-bottom: 1rem;">
+        <div style="font-size: 0.72rem; font-weight: 800; color: #059669; letter-spacing: 0.08em;">WORKFLOW</div>
+        <div style="font-size: 1.1rem; font-weight: 800; color: #111827;">업무 프로세스 선택</div>
     </div>
     """, unsafe_allow_html=True)
     menu = st.radio(
@@ -303,8 +329,8 @@ with st.sidebar:
     )
     st.divider()
     st.markdown("""
-    <div style="font-size: 0.72rem; font-weight: 800; color: #4F46E5; letter-spacing: 0.08em; margin-bottom: 0.3rem;">DATA SOURCE</div>
-    <div style="font-size: 0.95rem; font-weight: 700; color: #1E1B4B; margin-bottom: 0.6rem;">포트폴리오 데이터 관리</div>
+    <div style="font-size: 0.72rem; font-weight: 800; color: #059669; letter-spacing: 0.08em; margin-bottom: 0.3rem;">DATA REPOSITORY</div>
+    <div style="font-size: 0.95rem; font-weight: 700; color: #111827; margin-bottom: 0.6rem;">포트폴리오 데이터 관리</div>
     """, unsafe_allow_html=True)
     uploaded_file = st.file_uploader("신규 포트폴리오 CSV 업로드 (선택)", type=["csv"])
     if uploaded_file is not None:
@@ -324,12 +350,12 @@ if df is None:
     st.error("데이터 파일(kc_house_data.csv)을 찾을 수 없습니다. 같은 폴더에 파일을 두거나 왼쪽에서 업로드해 주세요.")
     st.stop()
 
-# 공통 차트 스타일 헬퍼
+# 공통 차트 스타일 헬퍼 (에메랄드 & 앰버/크림슨 팔레트)
 def style_chart(fig, height=420):
     fig.update_layout(
         paper_bgcolor="#FFFFFF",
-        plot_bgcolor="#F8FAFC",
-        font=dict(family="Pretendard, sans-serif", color="#1E1B4B"),
+        plot_bgcolor="#F8FAF9",
+        font=dict(family="Pretendard, sans-serif", color="#111827"),
         height=height,
         margin=dict(l=30, r=30, t=55, b=35)
     )
@@ -385,7 +411,7 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
     with col_a:
         fig_violin1 = px.violin(
             df, x="Risk_Label", y="building_age", color="Risk_Label", box=True,
-            color_discrete_map={"안전 매물(정상)": "#4F46E5", "고위험 매물(주의)": "#E11D48"},
+            color_discrete_map={"안전 매물(정상)": "#059669", "고위험 매물(주의)": "#DC2626"},
             labels={"Risk_Label": "리스크 등급", "building_age": "건물 노후도 (년)"},
             title="건물 노후도(연식)에 따른 리스크 분포 차이"
         )
@@ -396,7 +422,7 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
         df_clip_over = df[df["overvaluation_ratio"] <= 2.2]
         fig_violin2 = px.violin(
             df_clip_over, x="Risk_Label", y="overvaluation_ratio", color="Risk_Label", box=True,
-            color_discrete_map={"안전 매물(정상)": "#4F46E5", "고위험 매물(주의)": "#E11D48"},
+            color_discrete_map={"안전 매물(정상)": "#059669", "고위험 매물(주의)": "#DC2626"},
             labels={"Risk_Label": "리스크 등급", "overvaluation_ratio": "지역 시세 대비 고평가 지수 (1.0=평균)"},
             title="지역 평균 대비 고평가 비율 분포 차이 (핵심 구간 확대)"
         )
@@ -414,11 +440,11 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
         ).reset_index()
         fig_combo = make_subplots(specs=[[{"secondary_y": True}]])
         fig_combo.add_trace(
-            go.Bar(x=decade_df["built_decade"].astype(str) + "년대", y=decade_df["avg_price"], name="평균 주택 시세 ($)", marker_color="#A5B4FC"),
+            go.Bar(x=decade_df["built_decade"].astype(str) + "년대", y=decade_df["avg_price"], name="평균 주택 시세 ($)", marker_color="#6EE7B7"),
             secondary_y=False
         )
         fig_combo.add_trace(
-            go.Scatter(x=decade_df["built_decade"].astype(str) + "년대", y=decade_df["risk_pct"], name="고위험 매물 비중 (%)", mode="lines+markers", line=dict(color="#E11D48", width=3)),
+            go.Scatter(x=decade_df["built_decade"].astype(str) + "년대", y=decade_df["risk_pct"], name="고위험 매물 비중 (%)", mode="lines+markers", line=dict(color="#DC2626", width=3)),
             secondary_y=True
         )
         fig_combo.update_layout(title="건축연대별 평균 담보 시세 vs 고위험 비중(%) 추이", legend=dict(orientation="h", y=1.12))
@@ -429,7 +455,7 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
     with col_c2:
         matrix_df = df.pivot_table(index="grade", columns="condition", values="High_Risk", aggfunc="mean") * 100
         fig_matrix = px.imshow(
-            matrix_df, text_auto=".1f", color_continuous_scale="Purples", aspect="auto",
+            matrix_df, text_auto=".1f", color_continuous_scale="YlOrBr", aspect="auto",
             origin="lower",
             labels={"x": "주택 관리 상태 (1:불량 ~ 5:최상)", "y": "건축 등급 (Grade)", "color": "고위험률(%)"},
             title="건축 등급 × 관리 상태별 부실 위험률(%) 매트릭스"
@@ -446,7 +472,7 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
         
         fig_map = px.scatter_map(
             df_map, lat="lat", lon="long", color="Risk_Label", size="price",
-            color_discrete_map={"안전 매물(정상)": "#4F46E5", "고위험 매물(주의)": "#E11D48"},
+            color_discrete_map={"안전 매물(정상)": "#059669", "고위험 매물(주의)": "#DC2626"},
             hover_data={"lat": False, "long": False, "zipcode": True, "price": ":$,.0f", "building_age": True, "grade": True, "overvaluation_ratio": True},
             center={"lat": df["lat"].mean(), "lon": df["long"].mean()},
             zoom=9.0, height=500, map_style="carto-positron",
@@ -465,7 +491,7 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
         zip_top15["zipcode_str"] = "우편번호 " + zip_top15["zipcode"].astype(str)
         fig_zip = px.bar(
             zip_top15, x="risk_rate", y="zipcode_str", orientation="h",
-            text="risk_rate", color="risk_rate", color_continuous_scale="Purples",
+            text="risk_rate", color="risk_rate", color_continuous_scale="OrRd",
             labels={"risk_rate": "고위험 매물 비중 (%)", "zipcode_str": "행정구역"},
             title="보증사고 위험 집중 우편번호 TOP 15"
         )
@@ -477,7 +503,7 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
     sample_df = df.sample(min(1500, len(df)), random_state=42)
     fig_bubble = px.scatter(
         sample_df, x="sqft_living", y="price", color="Risk_Label", size="grade",
-        color_discrete_map={"안전 매물(정상)": "#4F46E5", "고위험 매물(주의)": "#E11D48"},
+        color_discrete_map={"안전 매물(정상)": "#059669", "고위험 매물(주의)": "#DC2626"},
         labels={"sqft_living": "주거 면적 (sqft)", "price": "주택 시세 ($)", "Risk_Label": "리스크 등급"},
         title="주거 면적 vs 시세 (원 크기: 주택 등급 / 색상: 리스크 등급)"
     )
@@ -489,7 +515,7 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
     with c_left:
         corr = df[num_cols].corr()
         fig_heat = px.imshow(
-            corr, text_auto=".2f", color_continuous_scale="RdBu_r", aspect="auto",
+            corr, text_auto=".2f", color_continuous_scale="BrBG", aspect="auto",
             title="주요 리스크 변수 간 상관계수"
         )
         st.plotly_chart(style_chart(fig_heat, height=460), use_container_width=True)
@@ -630,7 +656,7 @@ elif menu == "02. 데이터 정제 및 파생변수 설계":
             fig_before = px.histogram(df, x="price", nbins=50, title="전처리 전(Before) 주택 가격 분포", color_discrete_sequence=["#94A3B8"])
             st.plotly_chart(style_chart(fig_before), use_container_width=True)
         with c_b2:
-            fig_after = px.histogram(df_p, x="price", nbins=50, title="전처리 후(After) 정제된 담보 가격 분포", color_discrete_sequence=["#4F46E5"])
+            fig_after = px.histogram(df_p, x="price", nbins=50, title="전처리 후(After) 정제된 담보 가격 분포", color_discrete_sequence=["#059669"])
             st.plotly_chart(style_chart(fig_after), use_container_width=True)
 
         if scale_opt:
@@ -700,7 +726,7 @@ elif menu == "03. 예측 모델 학습 및 성능 검증":
             results = []
             trained_models = {}
             roc_fig = go.Figure()
-            palette = ["#64748B", "#4F46E5", "#10B981"]
+            palette = ["#64748B", "#059669", "#D97706"]
 
             for idx_m, (name, m) in enumerate(model_dict.items()):
                 m.fit(X_train_s, y_train)
@@ -750,7 +776,7 @@ elif menu == "03. 예측 모델 학습 및 성능 검증":
         with col_r1:
             radar_fig = go.Figure()
             metrics_cols = ["Accuracy (정확도)", "Precision (정밀도)", "Recall (재현율/부실탐지율)", "F1-Score", "ROC-AUC"]
-            radar_colors = ["#64748B", "#4F46E5", "#10B981"]
+            radar_colors = ["#64748B", "#059669", "#D97706"]
             for idx_r, (_, row) in enumerate(res_df.iterrows()):
                 radar_fig.add_trace(go.Scatterpolar(
                     r=[row[m] for m in metrics_cols],
@@ -769,7 +795,7 @@ elif menu == "03. 예측 모델 학습 및 성능 검증":
         with col_b1:
             dt_model = st.session_state.models["Decision Tree"]
             imp_df = pd.DataFrame({"변수": features, "중요도": dt_model.feature_importances_}).sort_values("중요도", ascending=True)
-            fig_imp = px.bar(imp_df, x="중요도", y="변수", orientation="h", title="핵심 부실 결정 요인 (심사 기준 근거)", color_discrete_sequence=["#4F46E5"])
+            fig_imp = px.bar(imp_df, x="중요도", y="변수", orientation="h", title="핵심 부실 결정 요인 (심사 기준 근거)", color_discrete_sequence=["#065F46"])
             st.plotly_chart(style_chart(fig_imp), use_container_width=True)
 
         with col_b2:
@@ -778,7 +804,7 @@ elif menu == "03. 예측 모델 학습 및 성능 검증":
             cm_pred = (cm_prob >= 0.35).astype(int)
             cm = confusion_matrix(st.session_state.y_test, cm_pred)
             fig_cm = px.imshow(
-                cm, text_auto=True, color_continuous_scale="Purples",
+                cm, text_auto=True, color_continuous_scale="Greens",
                 x=["예측: 안전(0)", "예측: 고위험(1)"], y=["실제: 안전(0)", "실제: 고위험(1)"],
                 title=f"{sel_cm_model} 예측 검증 행렬"
             )
@@ -851,17 +877,17 @@ elif menu == "04. 개별 담보 심사 및 동적 보증료 산정":
         fig_gauge = go.Figure(go.Indicator(
             mode="gauge+number",
             value=pd_prob * 100,
-            number={"suffix": "%", "font": {"color": "#1E1B4B", "size": 44}},
-            title={"text": "예상 보증사고 확률 (PD)", "font": {"size": 16, "color": "#4338CA"}},
+            number={"suffix": "%", "font": {"color": "#111827", "size": 44}},
+            title={"text": "예상 보증사고 확률 (PD)", "font": {"size": 16, "color": "#065F46"}},
             gauge={
                 "axis": {"range": [0, 100]},
-                "bar": {"color": "#4F46E5"},
+                "bar": {"color": "#064E3B"},
                 "steps": [
-                    {"range": [0, 30], "color": "#EEF2FF"},
+                    {"range": [0, 30], "color": "#ECFDF5"},
                     {"range": [30, 65], "color": "#FEF3C7"},
-                    {"range": [65, 100], "color": "#FFE4E6"}
+                    {"range": [65, 100], "color": "#FEE2E2"}
                 ],
-                "threshold": {"line": {"color": "#E11D48", "width": 4}, "thickness": 0.75, "value": 65}
+                "threshold": {"line": {"color": "#DC2626", "width": 4}, "thickness": 0.75, "value": 65}
             }
         ))
         st.plotly_chart(style_chart(fig_gauge, height=340), use_container_width=True)
@@ -930,8 +956,8 @@ elif menu == "05. 거시경제 스트레스 테스트":
     k3.metric("보증 기금 손실 절감 효과", f"${saved_amount:,.1f} 백만", f"손실액 {(saved_amount/max(1, loss_no_policy[idx]))*100:.1f}% 감소")
 
     fig_stress = go.Figure()
-    fig_stress.add_trace(go.Scatter(x=[f"-{d}%" for d in drops], y=loss_no_policy, mode="lines+markers", name="기존 일률 보증 방식 (예상 손실)", line=dict(color="#E11D48", width=3)))
-    fig_stress.add_trace(go.Scatter(x=[f"-{d}%" for d in drops], y=loss_with_ai, mode="lines+markers", name="K-SafeGuard 동적 관리 적용 (예상 손실)", line=dict(color="#4F46E5", width=3)))
+    fig_stress.add_trace(go.Scatter(x=[f"-{d}%" for d in drops], y=loss_no_policy, mode="lines+markers", name="기존 일률 보증 방식 (예상 손실)", line=dict(color="#DC2626", width=3)))
+    fig_stress.add_trace(go.Scatter(x=[f"-{d}%" for d in drops], y=loss_with_ai, mode="lines+markers", name="K-SafeGuard 동적 관리 적용 (예상 손실)", line=dict(color="#059669", width=3)))
     fig_stress.update_layout(title="시세 하락 시나리오별 누적 대위변제 손실액 비교 (단위: 백만 $)", xaxis_title="부동산 시세 하락률", yaxis_title="예상 손실액 ($M)")
     st.plotly_chart(style_chart(fig_stress), use_container_width=True)
 
