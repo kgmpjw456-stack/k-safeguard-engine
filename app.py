@@ -1123,33 +1123,33 @@ elif menu == "05. 거시경제 스트레스 테스트":
 
     df_p = st.session_state.df_processed.copy()
 
-    # 1) 두 심사 방식의 차이를 한눈에 보여주는 상단 비교 카드
+    # 1) 상단 비교 기준 안내 (AI 투 표현 및 깨진 마크다운 제거)
     info_c1, info_c2 = st.columns(2)
     with info_c1:
         with st.container(border=True):
-            st.markdown("##### 🔴 비교 기준 (As-Is): 기존 정적 LTV 심사")
+            st.markdown("##### 기존 심사 기준 (일괄 한도 적용)")
             st.write(
-                "감정가·공시가 대비 **일괄적인 보증 한도 커트라인**만 통과하면, "
-                "개별 주택의 주변 대비 시세 거품이나 노후도를 세밀하게 차등하지 않고 보증을 실행한 기존 포트폴리오입니다."
+                "감정가 대비 기본 보증 한도(LTV) 기준만 충족하면 개별 주택의 시세 거품이나 "
+                "노후도를 별도로 차감하지 않고 보증을 실행한 포트폴리오입니다."
             )
     with info_c2:
         with st.container(border=True):
-            st.markdown("##### 🟢 도입 모델 (To-Be): K-SafeGuard 핀셋 차등 심사")
+            st.markdown("##### K-SafeGuard 차등 심사 (고위험 한도 조정)")
             st.write(
-                "안전한 일반 매물은 한도를 유지하되, AI가 탐지한 **시세 고평가·노후 고위험 매물에 한해 "
-                "선별적으로 보증 한도를 추가 감액(안전마진 확보)**한 포트폴리오입니다."
+                "일반 안전 매물은 기존 한도를 유지하고, 모델이 분류한 고평가·노후 위험 매물에 한해 "
+                "보증 한도를 15% 축소하여 안전 여유분을 확보한 포트폴리오입니다."
             )
 
-    # 2) 시나리오 조작 슬라이더
+    # 2) 시뮬레이션 조건 설정
     col_s1, col_s2 = st.columns(2)
     with col_s1:
         with st.container(border=True):
-            st.markdown("##### ① 거시 충격 시나리오 설정")
-            price_drop = st.slider("가정 시나리오: 부동산 시세 하락률 (%)", 5, 35, 20, 5)
+            st.markdown("##### ① 시세 하락폭 설정")
+            price_drop = st.slider("부동산 시세 일괄 하락률 (%)", 5, 35, 25, 5)
     with col_s2:
         with st.container(border=True):
-            st.markdown("##### ② 리스크 방어 정책 한도 설정")
-            ltv_cap = st.slider("정책 개입: 기본 보증 한도(LTV) 상한 규제 (%)", 65, 90, 80, 5)
+            st.markdown("##### ② 기본 보증 한도 설정")
+            ltv_cap = st.slider("포트폴리오 기본 LTV 상한 기준 (%)", 65, 90, 80, 5)
 
     drops = list(range(0, 40, 5))
     loss_no_policy = []
@@ -1167,12 +1167,10 @@ elif menu == "05. 거시경제 스트레스 테스트":
     for d in drops:
         shocked_price = df_p["price"] * (1 - d / 100)
 
-        # 기존 정적 심사 손실액 및 미회수(깡통주택) 건수
         shortfall_old = np.maximum(0, deposit_amt - shocked_price)
         loss_no_policy.append(shortfall_old.sum() / 1e6)
         underwater_old.append(int((shortfall_old > 0).sum()))
 
-        # K-SafeGuard 차등 심사 (LTV 상한 + AI 고위험 매물 15% 핀셋 감액)
         capped_deposit = np.minimum(deposit_amt, df_p["price"] * (ltv_cap / 100))
         capped_deposit = np.where(df_p["High_Risk"] == 1, capped_deposit * 0.85, capped_deposit)
         shortfall_new = np.maximum(0, capped_deposit - shocked_price)
@@ -1184,41 +1182,42 @@ elif menu == "05. 거시경제 스트레스 테스트":
     saved_pct = (saved_amount / loss_no_policy[idx] * 100) if loss_no_policy[idx] > 0 else 0.0
     prevented_homes = underwater_old[idx] - underwater_new[idx]
 
-    # 3) 핵심 요약 KPI 4개
+    # 3) 요약 지표 4개
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric(f"시세 -{price_drop}% 시 기존 심사 손실", f"${loss_no_policy[idx]:,.1f} 백만", f"사고 매물 {underwater_old[idx]:,}채 발생", delta_color="inverse")
-    k2.metric("K-SafeGuard 적용 시 손실", f"${loss_with_ai[idx]:,.1f} 백만", f"사고 매물 {underwater_new[idx]:,}채로 억제")
-    k3.metric("보증 기금 손실 방어액", f"${saved_amount:,.1f} 백만", f"기존 대비 {saved_pct:.1f}% 손실 절감")
-    k4.metric("깡통주택 사고 예방 건수", f"{prevented_homes:,} 채 방어", "고위험 핀셋 한도 조정 효과")
+    k1.metric(f"시세 -{price_drop}% 시 기존 손실액", f"${loss_no_policy[idx]:,.1f} 백만", f"미회수 주택 {underwater_old[idx]:,}채", delta_color="inverse")
+    k2.metric("차등 심사 적용 시 손실액", f"${loss_with_ai[idx]:,.1f} 백만", f"미회수 주택 {underwater_new[idx]:,}채")
+    k3.metric("예상 손실 절감액", f"${saved_amount:,.1f} 백만", f"기존 대비 {saved_pct:.1f}% 감소")
+    k4.metric("원금 미회수 감소 건수", f"{prevented_homes:,} 채", "고위험 매물 한도 조정 효과")
 
-    # 4) 좌우 2열 비교 차트 (누적 손실 방어 면적 차트 + 사고 발생 건수 막대그래프)
+    # 4) 비교 차트 2종 (여백 및 축 순서 교정)
     ch_c1, ch_c2 = st.columns([1.35, 1])
 
     with ch_c1:
         fig_stress = go.Figure()
-        # 아래쪽 초록 선 먼저 배치 후 위쪽 빨간 선에서 tonexty로 사이 면적 색칠
         fig_stress.add_trace(go.Scatter(
             x=drops, y=loss_with_ai, mode="lines+markers",
-            name="K-SafeGuard 핀셋 차등 심사 (초록선)",
+            name="K-SafeGuard 차등 심사",
             line=dict(color="#059669", width=3.5),
             marker=dict(size=8)
         ))
         fig_stress.add_trace(go.Scatter(
             x=drops, y=loss_no_policy, mode="lines+markers",
-            name="기존 정적 LTV 심사 기준 (빨간선)",
+            name="기존 심사 기준",
             line=dict(color="#DC2626", width=3, dash="dot"),
             marker=dict(size=8),
             fill="tonexty",
-            fillcolor="rgba(16, 185, 129, 0.16)"
+            fillcolor="rgba(16, 185, 129, 0.15)"
         ))
         fig_stress.add_vline(x=price_drop, line_dash="dash", line_color="#064E3B", line_width=1.8)
+        fig_stress = style_chart(fig_stress, height=440)
         fig_stress.update_layout(
-            title="시세 하락 폭에 따른 대위변제 손실액 추이 (초록 음영 = 기금 방어액)",
+            title=dict(text="시세 하락률별 예상 미회수 손실액 비교", y=0.96, x=0.02),
             xaxis=dict(title="부동산 시세 하락률", tickvals=drops, ticktext=[f"-{d}%" for d in drops]),
             yaxis=dict(title="예상 미회수 손실액 ($ 백만)"),
-            legend=dict(orientation="h", y=1.12, x=0.0)
+            legend=dict(orientation="h", y=1.08, x=0.0),
+            margin=dict(l=30, r=30, t=90, b=40)
         )
-        st.plotly_chart(style_chart(fig_stress, height=430), use_container_width=True)
+        st.plotly_chart(fig_stress, use_container_width=True)
 
     with ch_c2:
         bar_idx = [i for i, d in enumerate(drops) if d >= 10]
@@ -1226,20 +1225,22 @@ elif menu == "05. 거시경제 스트레스 테스트":
         fig_cnt = go.Figure()
         fig_cnt.add_trace(go.Bar(
             x=bar_labels, y=[underwater_old[i] for i in bar_idx],
-            name="기존 정적 심사", marker_color="#EF4444"
+            name="기존 심사 기준", marker_color="#EF4444"
         ))
         fig_cnt.add_trace(go.Bar(
             x=bar_labels, y=[underwater_new[i] for i in bar_idx],
             name="K-SafeGuard 적용", marker_color="#059669"
         ))
+        fig_cnt = style_chart(fig_cnt, height=440)
         fig_cnt.update_layout(
             barmode="group",
-            title="하락 구간별 원금 미회수(깡통주택) 발생 건수",
-            xaxis_title="부동산 시세 하락률",
-            yaxis_title="사고 발생 주택 수 (채)",
-            legend=dict(orientation="h", y=1.12, x=0.0)
+            title=dict(text="하락 구간별 미회수 발생 주택 수", y=0.96, x=0.02),
+            xaxis=dict(title="부동산 시세 하락률", type="category", categoryorder="array", categoryarray=bar_labels),
+            yaxis=dict(title="발생 주택 수 (채)"),
+            legend=dict(orientation="h", y=1.08, x=0.0),
+            margin=dict(l=30, r=30, t=90, b=40)
         )
-        st.plotly_chart(style_chart(fig_cnt, height=430), use_container_width=True)
+        st.plotly_chart(fig_cnt, use_container_width=True)
 
     st.divider()
     st.subheader("심사 리포트 및 고위험군 관리 대장 추출")
