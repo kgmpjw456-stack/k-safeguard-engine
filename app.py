@@ -11,6 +11,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, roc_curve, confusion_matrix
 from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.tools.tools import add_constant
 
 # ---------------------------------------------------------
 # 0. 페이지 기본 설정 & 커스텀 디자인 시스템 (Forest Emerald & Slate UI)
@@ -246,6 +247,23 @@ st.markdown("""
         box-shadow: 0 4px 14px rgba(15, 35, 28, 0.04) !important;
         margin-bottom: 1rem !important;
     }
+    div[data-testid="stVerticalBlockBorderWrapper"] h5 {
+        color: #064E3B !important;
+        font-weight: 800 !important;
+        padding-bottom: 0.45rem !important;
+        border-bottom: 1.5px solid #E2E8E5 !important;
+        margin-bottom: 0.35rem !important;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stCaptionContainer"] {
+        color: #52605B !important;
+        font-weight: 500 !important;
+        margin-bottom: 0.7rem !important;
+    }
+
+    /* 알림창 에메랄드 배너 스타일 (st.info 기본 톤 정돈) */
+    div[data-testid="stAlert"][data-baseweb="notification"] {
+        border-radius: 10px !important;
+    }
 
     /* 체크박스 → 개별 옵션 카드 패널 */
     div[data-testid="stCheckbox"] {
@@ -382,7 +400,7 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ---------------------------------------------------------
-# 1. 데이터 로드 및 기본 타깃 정의 함수
+# 1. 데이터 로드 및 기본 타깃 정의 함수 (수정 #1: 노후도 단조성 교정)
 # ---------------------------------------------------------
 @st.cache_data
 def load_default_data():
@@ -404,13 +422,16 @@ def prepare_base_features(df_raw):
     zip_avg = df.groupby("zipcode")["price_per_sqft"].transform("mean")
     df["overvaluation_ratio"] = (df["price_per_sqft"] / zip_avg).round(3)
     
+    # [수정 #1] 신축 주택 안전 우대(-1.5) 및 노후 구간별 가중치 세분화 (역전 현상 방지)
     np.random.seed(42)
     market_shock = np.random.normal(0, 0.8, len(df))
     risk_score = (
         (df["overvaluation_ratio"] > 1.15).astype(int) * 2.0 +
         (df["grade"] <= 6).astype(int) * 2.0 +
         (df["condition"] <= 2).astype(int) * 2.0 +
-        (df["building_age"] >= 40).astype(int) * 1.0 +
+        (df["building_age"] >= 45).astype(int) * 2.5 +
+        ((df["building_age"] >= 25) & (df["building_age"] < 45)).astype(int) * 1.0 -
+        (df["building_age"] <= 10).astype(int) * 1.5 +
         market_shock
     )
     df["High_Risk"] = (risk_score >= 3.0).astype(int)
@@ -467,6 +488,7 @@ with st.sidebar:
         st.success("업로드 데이터 적용 완료")
 
     if st.button("기본 실거래 데이터로 초기화", use_container_width=True):
+        st.cache_data.clear()
         st.session_state.df_raw = load_default_data()
         st.session_state.df_processed = None
         st.session_state.models = {}
@@ -497,13 +519,17 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
     total_assets = df["price"].sum() / 1e8
     avg_price = df["price"].mean()
     risk_rate = df["High_Risk"].mean() * 100
-    missing_cnt = df.isnull().sum().sum()
+    missing_cnt = int(df.isnull().sum().sum())
+    # [수정 #6] 실제 결측률과 중복률 기반 데이터 품질 점수 동적 산출
+    total_cells = max(1, df.shape[0] * df.shape[1])
+    dup_rate = df.duplicated().mean() * 100
+    quality_score = max(0.0, 100.0 - (missing_cnt / total_cells) * 100 - dup_rate)
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("총 보증 대상 담보가치", f"${total_assets:,.1f} 억", f"전체 {len(df):,}건 기준")
     c2.metric("평균 주택 담보 시세", f"${avg_price:,.0f}", f"중위값 ${df['price'].median():,.0f}")
     c3.metric("잠재 고위험(부실우려) 비중", f"{risk_rate:.1f}%", f"{df['High_Risk'].sum():,}건 탐지", delta_color="inverse")
-    c4.metric("데이터 무결성 (결측치)", f"{missing_cnt} 건", "품질 점수 99.8점")
+    c4.metric("데이터 무결성 (결측치)", f"{missing_cnt} 건", f"품질 점수 {quality_score:.1f}점")
 
     safe_age = df[df["High_Risk"] == 0]["building_age"].median()
     risk_age = df[df["High_Risk"] == 1]["building_age"].median()
@@ -657,10 +683,11 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
     with c_right:
         st.markdown("**다중공선성(VIF) 자동 진단표** *(로지스틱 회귀 안정성 검증)*")
         vif_features = ["bedrooms", "bathrooms", "sqft_living", "floors", "grade", "building_age", "overvaluation_ratio"]
-        X_vif = df[vif_features].dropna()
+        # [수정 #7] 상수항(Intercept)을 포함하여 통계적으로 정확한 중심화 VIF 산출
+        X_vif = add_constant(df[vif_features].dropna())
         vif_data = pd.DataFrame({
             "변수명": vif_features,
-            "VIF 지수": [round(variance_inflation_factor(X_vif.values, i), 2) for i in range(len(vif_features))]
+            "VIF 지수": [round(variance_inflation_factor(X_vif.values, i + 1), 2) for i in range(len(vif_features))]
         })
         vif_data["진단 결과"] = np.where(vif_data["VIF 지수"] > 10, "주의 (높은 상관성)", "양호")
         st.dataframe(vif_data, use_container_width=True, hide_index=True)
@@ -742,6 +769,11 @@ elif menu == "02. 데이터 정제 및 파생변수 설계":
         selected_features = st.multiselect("최종 모델 투입 독립변수(X) 선택", default_features, default=default_features)
 
     if st.button("전처리 파이프라인 실행 및 데이터 확정", type="primary", use_container_width=True):
+        # [수정 #8] 독립변수가 하나도 선택되지 않았을 때 앱 크래시 방지
+        if not selected_features and not (add_ltv_proxy or add_loc_score or add_space_ratio):
+            st.error("최소 1개 이상의 독립변수(X) 또는 파생변수를 선택해 주세요.")
+            st.stop()
+
         df_p = df.copy()
         before_cnt = len(df_p)
 
@@ -779,6 +811,8 @@ elif menu == "02. 데이터 정제 및 파생변수 설계":
         st.session_state.features = final_features
         st.session_state.scale_opt = scale_opt
         st.session_state.test_ratio = test_ratio
+        # [수정 #2] 전처리 변수 구조 변경 시 기존 학습 모델 초기화 (4단계 차원 불일치 에러 차단)
+        st.session_state.models = {}
 
         st.success(f"전처리 파이프라인 완료: 원본 {before_cnt:,}건 → 정제 후 {len(df_p):,}건 (최종 학습 변수: {len(final_features)}개)")
 
@@ -865,7 +899,8 @@ elif menu == "03. 예측 모델 학습 및 성능 검증":
             else:
                 X_train_s, X_test_s = X_train.values, X_test.values
 
-            hidden_tuple = eval(mlp_hidden)
+            hidden_maps = {"(64, 32)": (64, 32), "(32, 16)": (32, 16), "(100, 50)": (100, 50)}
+            hidden_tuple = hidden_maps[mlp_hidden]
             model_dict = {
                 "Logistic Regression": LogisticRegression(C=lr_c, max_iter=1000, random_state=42),
                 "Decision Tree": DecisionTreeClassifier(max_depth=dt_depth, random_state=42),
@@ -880,7 +915,8 @@ elif menu == "03. 예측 모델 학습 및 성능 검증":
             for idx_m, (name, m) in enumerate(model_dict.items()):
                 m.fit(X_train_s, y_train)
                 y_prob = m.predict_proba(X_test_s)[:, 1]
-                y_pred = (y_prob >= 0.42).astype(int)
+                # [수정 #3] 분류 임계값을 0.40으로 일괄 통일
+                y_pred = (y_prob >= 0.40).astype(int)
                 acc = accuracy_score(y_test, y_pred)
                 prec = precision_score(y_test, y_pred, zero_division=0)
                 rec = recall_score(y_test, y_pred, zero_division=0)
@@ -906,13 +942,14 @@ elif menu == "03. 예측 모델 학습 및 성능 검증":
             st.session_state.models = trained_models
             st.session_state.scaler = scaler
             st.session_state.results_df = pd.DataFrame(results)
+            st.session_state.X_train = X_train
             st.session_state.X_test_s = X_test_s
             st.session_state.y_test = y_test
             st.session_state.roc_fig = roc_fig
 
     if st.session_state.models:
         res_df = st.session_state.results_df
-        st.subheader("모델 성능 종합 비교표")
+        st.subheader("모델 성능 종합 비교표 (기준 임계값: 0.40)")
         st.dataframe(res_df, use_container_width=True, hide_index=True)
         perf_csv = res_df.to_csv(index=False).encode("utf-8-sig")
         st.download_button(
@@ -950,12 +987,13 @@ elif menu == "03. 예측 모델 학습 및 성능 검증":
         with col_b2:
             sel_cm_model = st.selectbox("혼동행렬(Confusion Matrix) 확인할 모델 선택", list(st.session_state.models.keys()))
             cm_prob = st.session_state.models[sel_cm_model].predict_proba(st.session_state.X_test_s)[:, 1]
-            cm_pred = (cm_prob >= 0.35).astype(int)
+            # [수정 #3] 성능 비교표와 동일하게 임계값 0.40으로 통일
+            cm_pred = (cm_prob >= 0.40).astype(int)
             cm = confusion_matrix(st.session_state.y_test, cm_pred)
             fig_cm = px.imshow(
                 cm, text_auto=True, color_continuous_scale="Greens",
                 x=["예측: 안전(0)", "예측: 고위험(1)"], y=["실제: 안전(0)", "실제: 고위험(1)"],
-                title=f"{sel_cm_model} 예측 검증 행렬"
+                title=f"{sel_cm_model} 예측 검증 행렬 (임계값 0.40)"
             )
             st.plotly_chart(style_chart(fig_cm), use_container_width=True)
 
@@ -971,8 +1009,9 @@ elif menu == "04. 개별 담보 심사 및 동적 보증료 산정":
 
     st.write("신청 주택의 담보 조건을 입력하면 부실 확률(PD)과 기대손실액(EL)을 기반으로 적정 보증료율 및 권고 한도를 산출합니다.")
 
+    # [수정 #5] 기본 심사 엔진을 연속 확률 곡선이 부드러운 Logistic Regression(index=0)으로 지정
     with st.container(border=True):
-        engine_choice = st.selectbox("심사에 적용할 예측 모델 선택", list(st.session_state.models.keys()), index=1)
+        engine_choice = st.selectbox("심사에 적용할 예측 모델 선택", list(st.session_state.models.keys()), index=0)
 
     c1, c2, c3 = st.columns(3)
     with c1:
@@ -995,24 +1034,29 @@ elif menu == "04. 개별 담보 심사 및 동적 보증료 산정":
             in_bath = st.number_input("욕실 수", 1.0, 6.0, 2.0, 0.5)
 
     ltv_current = in_deposit / in_price
+    df_p_ref = st.session_state.df_processed
+    median_lot = float(df_p_ref["sqft_lot"].median()) if (df_p_ref is not None and "sqft_lot" in df_p_ref.columns) else 7500.0
+
+    # [수정 #4] living_to_lot_ratio 포함 전 파생변수 정확히 계산 및 누락 시 실제 학습 평균값 보완
     input_row = {
         "bedrooms": in_bed,
         "bathrooms": in_bath,
         "sqft_living": in_sqft,
-        "floors": 1.5,
+        "floors": float(df_p_ref["floors"].median()) if df_p_ref is not None else 1.5,
         "waterfront": 0,
         "view": 0,
         "condition": in_cond,
         "grade": in_grade,
         "building_age": in_age,
         "overvaluation_ratio": in_overval,
-        "estimated_ltv": ltv_current,
-        "location_premium": in_grade * 0.5
+        "estimated_ltv": round(ltv_current, 3),
+        "location_premium": round(in_grade * 0.5, 2),
+        "living_to_lot_ratio": round(in_sqft / max(1.0, median_lot), 3)
     }
     input_df = pd.DataFrame([input_row])
     for col in st.session_state.features:
         if col not in input_df.columns:
-            input_df[col] = st.session_state.X_train[col].mean() if "X_train" in st.session_state and col in st.session_state.X_train.columns else 0
+            input_df[col] = float(df_p_ref[col].mean()) if (df_p_ref is not None and col in df_p_ref.columns) else 0.0
     input_df = input_df[st.session_state.features]
     input_s = st.session_state.scaler.transform(input_df) if st.session_state.scale_opt else input_df.values
 
@@ -1030,30 +1074,24 @@ elif menu == "04. 개별 담보 심사 및 동적 보증료 산정":
     res_c1, res_c2 = st.columns([1, 1.3])
     
     with res_c1:
-        risk_color = "#059669" if pd_prob < 0.30 else ("#D97706" if pd_prob < 0.65 else "#DC2626")
-        risk_grade_txt = "LOW RISK · 우량" if pd_prob < 0.30 else ("MODERATE · 주의" if pd_prob < 0.65 else "HIGH RISK · 경고")
+        fig_gauge = go.Figure(go.Indicator(
+            mode="gauge+number",
+            value=pd_prob * 100,
+            number={"suffix": "%", "font": {"color": "#111827", "size": 44}},
+            title={"text": "예상 보증사고 확률 (PD)", "font": {"size": 16, "color": "#065F46"}},
+            gauge={
+                "axis": {"range": [0, 100]},
+                "bar": {"color": "#064E3B"},
+                "steps": [
+                    {"range": [0, 30], "color": "#ECFDF5"},
+                    {"range": [30, 65], "color": "#FEF3C7"},
+                    {"range": [65, 100], "color": "#FEE2E2"}
+                ],
+                "threshold": {"line": {"color": "#DC2626", "width": 4}, "thickness": 0.75, "value": 65}
+            }
+        ))
+        st.plotly_chart(style_chart(fig_gauge, height=340), use_container_width=True)
 
-        fig_gauge = go.Figure(data=[go.Pie(
-            values=[pd_prob * 100, 100 - (pd_prob * 100)],
-            hole=0.76,
-            marker_colors=[risk_color, "#E6ECE9"],
-            textinfo="none",
-            hoverinfo="none",
-            sort=False,
-            direction="clockwise"
-        )])
-        fig_gauge.update_layout(
-            title=dict(text="예상 보증사고 확률 (PD)", x=0.5, xanchor="center", font=dict(size=15, color="#111827")),
-            showlegend=False,
-            paper_bgcolor="#FFFFFF",
-            height=330,
-            margin=dict(l=20, r=20, t=55, b=20),
-            annotations=[
-                dict(text=f"<b>{pd_prob*100:.1f}%</b>", x=0.5, y=0.55, font=dict(size=36, color="#111827"), showarrow=False),
-                dict(text=risk_grade_txt, x=0.5, y=0.38, font=dict(size=12, color=risk_color, weight="bold"), showarrow=False)
-            ]
-        )
-        st.plotly_chart(fig_gauge, use_container_width=True)
     with res_c2:
         st.subheader("심사 결과 및 보증 조건 산출 내역")
         if pd_prob < 0.30 and in_deposit <= safe_limit:
