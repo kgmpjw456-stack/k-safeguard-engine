@@ -356,6 +356,37 @@ st.markdown("""
         font-weight: 700 !important;
         top: -28px !important;
     }
+/* 3, 4단계 드롭다운(Selectbox) & 숫자 입력창(NumberInput) 카드형 업그레이드 */
+    div[data-testid="stSelectbox"],
+    div[data-testid="stNumberInput"] {
+        background-color: #F8FAF9 !important;
+        border: 1px solid #DCE7E2 !important;
+        border-radius: 10px !important;
+        padding: 0.65rem 0.9rem !important;
+        margin-bottom: 0.5rem !important;
+        transition: all 0.2s ease !important;
+    }
+    div[data-testid="stSelectbox"]:hover,
+    div[data-testid="stNumberInput"]:hover {
+        background-color: #ECFDF5 !important;
+        border-color: #34D399 !important;
+    }
+    div[data-testid="stSelectbox"] label p,
+    div[data-testid="stNumberInput"] label p {
+        font-weight: 700 !important;
+        color: #14241E !important;
+        font-size: 0.88rem !important;
+    }
+
+    /* 3, 4단계 컨테이너 박스 테두리 및 여백 보정 */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background-color: #FFFFFF !important;
+        border: 1px solid #D5E2DC !important;
+        border-top: 4px solid #059669 !important;
+        border-radius: 12px !important;
+        padding: 1.3rem !important;
+        box-shadow: 0 4px 14px rgba(15, 35, 28, 0.04) !important;
+    }
 </style>
 
 <div class="hero-banner">
