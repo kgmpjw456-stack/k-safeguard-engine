@@ -46,13 +46,13 @@ st.markdown("""
         border-right: 1px solid #E2E8E5 !important;
         box-shadow: 4px 0 20px rgba(15, 35, 28, 0.04);
     }
-    section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label > div:first-child {
+    section[data-testid="stSidebar"] [role="radiogroup"] label > div:first-child {
         display: none !important;
     }
-    section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] {
+    section[data-testid="stSidebar"] [role="radiogroup"] {
         gap: 0.5rem;
     }
-    section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label {
+    section[data-testid="stSidebar"] [role="radiogroup"] label {
         background-color: #F8FAF9 !important;
         border: 1px solid #E5EAE7 !important;
         border-left: 4px solid transparent !important;
@@ -62,24 +62,24 @@ st.markdown("""
         cursor: pointer;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label p {
+    section[data-testid="stSidebar"] [role="radiogroup"] label p {
         font-size: 0.9rem !important;
         font-weight: 600 !important;
         color: #374151 !important;
     }
-    section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:hover {
+    section[data-testid="stSidebar"] [role="radiogroup"] label:hover {
         background-color: #ECFDF5 !important;
         border-color: #A7F3D0 !important;
         transform: translateX(3px);
     }
-    section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:has(input:checked) {
+    section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
         background: linear-gradient(135deg, #064E3B 0%, #065F46 100%) !important;
         border: 1px solid #047857 !important;
         border-left: 5px solid #34D399 !important;
         box-shadow: 0 6px 14px rgba(6, 78, 59, 0.22) !important;
         transform: translateX(3px);
     }
-    section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:has(input:checked) p {
+    section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) * {
         color: #FFFFFF !important;
         font-weight: 700 !important;
     }
@@ -91,7 +91,7 @@ st.markdown("""
         color: #FFFFFF !important;
         border: none !important;
         border-radius: 8px !important;
-        padding: 0.62rem 1.25rem !important;
+        padding: 0.65rem 1.25rem !important;
         font-weight: 600 !important;
         letter-spacing: -0.01em;
         box-shadow: 0 4px 12px rgba(6, 78, 59, 0.22) !important;
@@ -235,76 +235,24 @@ st.markdown("""
         border-radius: 10px !important;
     }
 
-    /* st.container(border=True) 입력 패널 화이트 카드 */
-    div[data-testid="stVerticalBlockBorderWrapper"] {
+    /* border=True 컨테이너 카드 배경 & 상단 에메랄드 바 */
+    div[data-testid="stVerticalBlockBorderWrapper"],
+    [data-testid="stLayoutWrapper"] > div[style*="border"] {
         background-color: #FFFFFF !important;
         border: 1px solid #D5E2DC !important;
-        border-top: 3px solid #059669 !important;
+        border-top: 4px solid #059669 !important;
         border-radius: 12px !important;
         padding: 1.2rem 1.4rem !important;
         box-shadow: 0 4px 14px rgba(15, 35, 28, 0.04) !important;
         margin-bottom: 1rem !important;
     }
 
-    /* 슬라이더 숫자 값 & 핸들 에메랄드 강조 */
-    div[data-testid="stThumbValue"] {
-        color: #065F46 !important;
-        font-weight: 700 !important;
-    }
-    div[data-baseweb="slider"] div[role="slider"] {
-        background-color: #064E3B !important;
-        border: 2px solid #34D399 !important;
-        width: 18px !important;
-        height: 18px !important;
-    }
-
-    /* 드롭다운 & 숫자 입력창 배경/테두리 */
-    div[data-baseweb="select"] > div,
-    div[data-testid="stNumberInput"] input {
-        background-color: #F8FAF9 !important;
-        border-radius: 8px !important;
-        font-weight: 600 !important;
-        color: #111827 !important;
-    }
-
-    /* 멀티셀렉트 선택 태그(칩) 에메랄드 톤 통일 */
-    span[data-baseweb="tag"] {
-        background-color: #ECFDF5 !important;
-        color: #065F46 !important;
-        border: 1px solid #A7F3D0 !important;
-        border-radius: 6px !important;
-        font-weight: 600 !important;
-    }
-/* 최신 Streamlit 사이드바 라디오 카드 강제 적용 */
-    [data-testid="stSidebar"] [role="radiogroup"] label {
-        background-color: #F4F7F5 !important;
-        border: 1px solid #D5E2DC !important;
-        border-radius: 10px !important;
-        padding: 12px 14px !important;
-        margin-bottom: 6px !important;
-    }
-    [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
-        background: #064E3B !important;
-        border-left: 5px solid #34D399 !important;
-    }
-    [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) * {
-        color: #FFFFFF !important;
-    }
-
-    /* 최신 Streamlit border=True 컨테이너 카드 배경 강제 적용 */
-    [data-testid="stLayoutWrapper"] > div[style*="border"] {
-        background-color: #FFFFFF !important;
-        border-top: 4px solid #059669 !important;
-        border-radius: 12px !important;
-        padding: 1.2rem !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
-    }
-/* 1. 체크박스 → 개별 옵션 카드 패널로 업그레이드 */
+    /* 체크박스 → 개별 옵션 카드 패널 */
     div[data-testid="stCheckbox"] {
         background-color: #F8FAF9 !important;
         border: 1px solid #DCE7E2 !important;
         border-radius: 10px !important;
-        padding: 0.65rem 0.9rem !important;
+        padding: 0.6rem 0.85rem !important;
         margin-bottom: 0.45rem !important;
         transition: all 0.2s ease !important;
     }
@@ -313,7 +261,6 @@ st.markdown("""
         border-color: #34D399 !important;
         transform: translateX(2px);
     }
-    /* 체크된 항목은 에메랄드 테두리 + 연한 민트 배경으로 강조 */
     div[data-testid="stCheckbox"]:has(input:checked) {
         background-color: #ECFDF5 !important;
         border: 1.5px solid #059669 !important;
@@ -322,10 +269,10 @@ st.markdown("""
     div[data-testid="stCheckbox"] label p {
         font-weight: 600 !important;
         color: #14241E !important;
-        font-size: 0.9rem !important;
+        font-size: 0.88rem !important;
     }
 
-    /* 2. 슬라이더 → 두꺼운 트랙 + 입체 핸들 + 숫자 배지 스타일 */
+    /* 슬라이더 → 두꺼운 트랙 + 입체 핸들 + 숫자 배지 */
     div[data-testid="stSlider"] {
         background-color: #F8FAF9 !important;
         border: 1px solid #DCE7E2 !important;
@@ -333,12 +280,10 @@ st.markdown("""
         padding: 0.75rem 1rem 0.65rem 1rem !important;
         margin-bottom: 0.5rem !important;
     }
-    /* 슬라이더 바 두께 확대 (기존 4px → 8px) */
     div[data-testid="stSlider"] div[data-baseweb="slider"] > div > div {
         height: 8px !important;
         border-radius: 999px !important;
     }
-    /* 슬라이더 동그란 손잡이 확대 및 이중 링 디자인 */
     div[data-testid="stSlider"] div[role="slider"] {
         width: 22px !important;
         height: 22px !important;
@@ -346,7 +291,6 @@ st.markdown("""
         border: 3px solid #FFFFFF !important;
         box-shadow: 0 0 0 2px #059669, 0 3px 8px rgba(0, 0, 0, 0.2) !important;
     }
-    /* 슬라이더 위 현재 수치 텍스트를 작은 배지처럼 표시 */
     div[data-testid="stThumbValue"] {
         background-color: #064E3B !important;
         color: #FFFFFF !important;
@@ -356,7 +300,8 @@ st.markdown("""
         font-weight: 700 !important;
         top: -28px !important;
     }
-/* 3, 4단계 드롭다운(Selectbox) & 숫자 입력창(NumberInput) 카드형 업그레이드 */
+
+    /* 드롭다운 & 숫자 입력창 카드형 업그레이드 */
     div[data-testid="stSelectbox"],
     div[data-testid="stNumberInput"] {
         background-color: #F8FAF9 !important;
@@ -377,15 +322,20 @@ st.markdown("""
         color: #14241E !important;
         font-size: 0.88rem !important;
     }
-
-    /* 3, 4단계 컨테이너 박스 테두리 및 여백 보정 */
-    div[data-testid="stVerticalBlockBorderWrapper"] {
+    div[data-baseweb="select"] > div,
+    div[data-testid="stNumberInput"] input {
         background-color: #FFFFFF !important;
-        border: 1px solid #D5E2DC !important;
-        border-top: 4px solid #059669 !important;
-        border-radius: 12px !important;
-        padding: 1.3rem !important;
-        box-shadow: 0 4px 14px rgba(15, 35, 28, 0.04) !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        color: #111827 !important;
+    }
+
+    /* 멀티셀렉트 선택 태그(칩) 에메랄드 톤 통일 */
+    span[data-baseweb="tag"] {
+        background-color: #065F46 !important;
+        color: #FFFFFF !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
     }
 </style>
 
@@ -734,7 +684,7 @@ elif menu == "02. 데이터 정제 및 파생변수 설계":
     q3.metric("결측치 총 건수 (Missing)", f"{null_cnt} 건", "무결성 양호" if null_cnt == 0 else "정제 필요")
     q4.metric("중복 데이터 행 수 (Duplicates)", f"{dup_cnt} 건", "중복 없음" if dup_cnt == 0 else "제거 권장")
 
-    with st.expander("전체 변수 명세서 및 결측률·데이터 타입 상세 확인", expanded=True):
+    with st.expander("전체 변수 명세서 및 결측률·데이터 타입 상세 확인", expanded=False):
         var_desc_map = {
             "price": "주택 실거래 시세 ($)", "bedrooms": "침실 수", "bathrooms": "욕실 수",
             "sqft_living": "실내 주거 면적 (sqft)", "sqft_lot": "대지 면적 (sqft)", "floors": "건물 층수",
@@ -760,30 +710,34 @@ elif menu == "02. 데이터 정제 및 파생변수 설계":
     st.divider()
 
     st.subheader("2) 전처리 파이프라인 및 금융 파생변수 설정")
-    with st.container(border=True):
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("**[Step 1] 데이터 클리닝 (중복·결측 정제)**")
+    col1, col2 = st.columns(2)
+    with col1:
+        with st.container(border=True):
+            st.markdown("##### [Step 1] 데이터 클리닝 (중복·결측 정제)")
             drop_dup_opt = st.checkbox("중복 행(Duplicates) 자동 검출 및 제거", value=True)
             missing_opt = st.selectbox("결측치(Missing Value) 처리 전략", ["중앙값(Median) 대체 (이상치 강건)", "평균값(Mean) 대체", "결측 행 삭제(Drop)"])
 
-            st.markdown("**[Step 2] 이상치(초고가 호화주택) 정제 설정**")
+        with st.container(border=True):
+            st.markdown("##### [Step 2] 이상치(초고가 호화주택) 정제 설정")
             outlier_opt = st.radio(
                 "상위 초고가 주택 처리 방식 (일반 주거용 보증 기준 맞추기)",
                 ["제거 안 함 (원본 유지)", "상위 1% 초고가 이상치 제거 (권장)", "IQR(1.5배) 기준 이상치 제거"],
                 index=1
             )
 
-        with col2:
-            st.markdown("**[Step 3] 금융·부동산 도메인 파생변수 생성**")
+    with col2:
+        with st.container(border=True):
+            st.markdown("##### [Step 3] 금융·부동산 도메인 파생변수 생성")
             add_ltv_proxy = st.checkbox("잠재 담보인정비율(estimated_ltv) 변수 생성", value=True)
             add_loc_score = st.checkbox("입지 프리미엄 지수(location_premium) 생성", value=True)
             add_space_ratio = st.checkbox("주거 공간 효율 비율(living_to_lot_ratio) 생성", value=True)
 
-            st.markdown("**[Step 4] 피처 스케일링 & 학습/검증 분할**")
+        with st.container(border=True):
+            st.markdown("##### [Step 4] 피처 스케일링 & 학습/검증 분할")
             scale_opt = st.checkbox("StandardScaler 표준화 적용 (평균 0, 분산 1 정규화)", value=True)
             test_ratio = st.slider("테스트(검증) 데이터 분할 비율", 0.1, 0.4, 0.2, 0.05)
 
+    with st.container(border=True):
         default_features = ["bedrooms", "bathrooms", "sqft_living", "floors", "waterfront", "view", "condition", "grade", "building_age", "overvaluation_ratio"]
         selected_features = st.multiselect("최종 모델 투입 독립변수(X) 선택", default_features, default=default_features)
 
@@ -878,14 +832,22 @@ elif menu == "03. 예측 모델 학습 및 성능 검증":
 
     st.info("**3대 예측 알고리즘 구성:** ① 로지스틱 회귀(감사·규제 대응) ② 의사결정나무(명확한 심사 기준선 도출) ③ 인공신경망 MLP(비선형 리스크 요인 정밀 탐지)")
 
-    with st.container(border=True):
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            lr_c = st.slider("로지스틱 회귀 규제 강도(C)", 0.1, 5.0, 1.0)
-        with c2:
-            dt_depth = st.slider("의사결정나무 최대 깊이(Max Depth)", 2, 12, 5)
-        with c3:
-            mlp_hidden = st.selectbox("인공신경망(MLP) 은닉층 구조", ["(64, 32)", "(32, 16)", "(100, 50)"], index=0)
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        with st.container(border=True):
+            st.markdown("##### ① 로지스틱 회귀")
+            st.caption("감사·규제 대응용 선형 기준 모델")
+            lr_c = st.slider("규제 강도 (C)", 0.1, 5.0, 1.0)
+    with c2:
+        with st.container(border=True):
+            st.markdown("##### ② 의사결정나무")
+            st.caption("심사 커트라인 도출용 규칙 모델")
+            dt_depth = st.slider("최대 깊이 (Max Depth)", 2, 12, 5)
+    with c3:
+        with st.container(border=True):
+            st.markdown("##### ③ 인공신경망 (MLP)")
+            st.caption("비선형 복합 리스크 탐지 모델")
+            mlp_hidden = st.selectbox("은닉층 구조 (Hidden Layers)", ["(64, 32)", "(32, 16)", "(100, 50)"], index=0)
 
     if st.button("3종 예측 모델 동시 학습 및 검증 시작", type="primary", use_container_width=True):
         with st.spinner("3종의 분류 모델을 학습하고 성능을 교차 검증 중입니다..."):
@@ -1011,17 +973,23 @@ elif menu == "04. 개별 담보 심사 및 동적 보증료 산정":
 
     with st.container(border=True):
         engine_choice = st.selectbox("심사에 적용할 예측 모델 선택", list(st.session_state.models.keys()), index=1)
-        
-        c1, c2, c3 = st.columns(3)
-        with c1:
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        with st.container(border=True):
+            st.markdown("##### ① 담보 가치 및 보증 신청액")
             in_price = st.number_input("신청 주택 감정 시세 ($)", 100000, 3000000, 450000, step=10000)
             in_deposit = st.number_input("보증 신청 금액 ($)", 50000, 2500000, 380000, step=10000)
             in_sqft = st.slider("주거 면적 (sqft)", 500, 6000, 1800)
-        with c2:
+    with c2:
+        with st.container(border=True):
+            st.markdown("##### ② 건물 노후도 및 물리적 등급")
             in_age = st.slider("건물 노후도 (년)", 0, 115, 35)
             in_grade = st.slider("건축 등급 (1~13)", 3, 13, 7)
             in_cond = st.slider("관리 상태 (1~5)", 1, 5, 3)
-        with c3:
+    with c3:
+        with st.container(border=True):
+            st.markdown("##### ③ 시세 괴리 및 주거 스펙")
             in_overval = st.slider("주변 시세 대비 고평가 지수 (1.0=평균)", 0.6, 2.0, 1.18, 0.02)
             in_bed = st.number_input("침실 수", 1, 8, 3)
             in_bath = st.number_input("욕실 수", 1.0, 6.0, 2.0, 0.5)
@@ -1112,11 +1080,14 @@ elif menu == "05. 거시경제 스트레스 테스트":
 
     df_p = st.session_state.df_processed.copy()
     
-    with st.container(border=True):
-        col_s1, col_s2 = st.columns(2)
-        with col_s1:
+    col_s1, col_s2 = st.columns(2)
+    with col_s1:
+        with st.container(border=True):
+            st.markdown("##### ① 거시 충격 시나리오 설정")
             price_drop = st.slider("가정 시나리오: 부동산 시세 하락률 (%)", 0, 35, 15, 5)
-        with col_s2:
+    with col_s2:
+        with st.container(border=True):
+            st.markdown("##### ② 리스크 방어 정책 한도 설정")
             ltv_cap = st.slider("정책 개입: 보증 한도(LTV) 상한 규제 (%)", 60, 90, 80, 5)
 
     drops = list(range(0, 40, 5))
