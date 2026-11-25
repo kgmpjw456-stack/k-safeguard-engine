@@ -80,16 +80,9 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
-    st.markdown("""
-        <div style='background: linear-gradient(135deg, #1e3a8a 0%, #0f766e 100%); padding: 40px; border-radius: 15px; color: white; text-align: center; margin-bottom: 30px;'>
-            <h1 style='margin:0;'>🏛️ K-SafeGuard Engine</h1>
-            <p style='font-size: 18px; margin-top: 10px;'>금융공기업(HF·HUG) AI 기반 동적 담보 리스크 평가 및 보증 포트폴리오 최적화 시스템</p>
-        </div>
-    """, unsafe_allow_html=True)
-    
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
-        st.subheader("🔒 관계자 인증 (Access Control)")
+        st.subheader("관계자 인증 (Access Control)")
         pwd = st.text_input("시스템 접속 비밀번호를 입력하세요", type="password", placeholder="비밀번호 입력")
         if st.button("시스템 접속", use_container_width=True, type="primary"):
             if pwd == "kmis":
@@ -122,7 +115,7 @@ def prepare_base_features(df_raw):
     zip_avg = df.groupby("zipcode")["price_per_sqft"].transform("mean")
     df["overvaluation_ratio"] = (df["price_per_sqft"] / zip_avg).round(3)
     
-   # 타깃 변수 생성: 복합 리스크 스코어 + 현실적 시장·차주 불확실성(노이즈) 반영
+    # 타깃 변수 생성: 복합 리스크 스코어 + 현실적 시장·차주 불확실성 반영
     np.random.seed(42)
     market_shock = np.random.normal(0, 0.8, len(df))
     risk_score = (
@@ -149,28 +142,28 @@ if "models" not in st.session_state:
     st.session_state.models = {}
 
 # ---------------------------------------------------------
-# 상단 헤더 & 사이드바 네비게이션
+# 사이드바 네비게이션
 # ---------------------------------------------------------
 with st.sidebar:
-    st.header("📌 업무 모듈 선택")
+    st.header("업무 모듈 선택")
     menu = st.radio(
         "단계별 시스템 이동",
         [
-            "1. 포트폴리오 & 심층 EDA",
-            "2. 데이터 전처리 & 파생변수 공학",
-            "3. AI 심사 엔진 학습 및 검증",
-            "4. 개별 매물 심사 & 동적 보증료",
-            "5. 거시경제 스트레스 테스트"
+            "01. 포트폴리오 현황 및 데이터 탐색",
+            "02. 데이터 정제 및 파생변수 설계",
+            "03. 예측 모델 학습 및 성능 검증",
+            "04. 개별 담보 심사 및 동적 보증료 산정",
+            "05. 거시경제 스트레스 테스트"
         ]
     )
     st.divider()
-    st.subheader("📂 데이터 소스 관리")
+    st.subheader("데이터 소스 관리")
     uploaded_file = st.file_uploader("신규 포트폴리오 CSV 업로드 (선택)", type=["csv"])
     if uploaded_file is not None:
         st.session_state.df_raw = prepare_base_features(pd.read_csv(uploaded_file))
         st.session_state.df_processed = None
         st.session_state.models = {}
-        st.success("업로드 데이터 적용 완료!")
+        st.success("업로드 데이터 적용이 완료되었습니다.")
 
     if st.button("기본 실거래 데이터로 초기화", use_container_width=True):
         st.session_state.df_raw = load_default_data()
@@ -184,12 +177,11 @@ if df is None:
     st.stop()
 
 # =========================================================
-# 모듈 1: 포트폴리오 & 심층 EDA (완전 업그레이드 버전)
+# 모듈 1: 포트폴리오 & 심층 EDA
 # =========================================================
-if menu == "1. 포트폴리오 & 심층 EDA":
-    st.header("📊 1. 보증 포트폴리오 현황 및 심층 데이터 탐색 (Deep EDA)")
+if menu == "01. 포트폴리오 현황 및 데이터 탐색":
+    st.header("01. 보증 포트폴리오 현황 및 데이터 탐색")
     
-    # 1-1. 금융 KPI 스코어카드
     total_assets = df["price"].sum() / 1e8
     avg_price = df["price"].mean()
     risk_rate = df["High_Risk"].mean() * 100
@@ -201,18 +193,16 @@ if menu == "1. 포트폴리오 & 심층 EDA":
     c3.metric("잠재 고위험(부실우려) 비중", f"{risk_rate:.1f}%", f"{df['High_Risk'].sum():,}건 탐지", delta_color="inverse")
     c4.metric("데이터 무결성 (결측치)", f"{missing_cnt} 건", "품질 점수 99.8점")
 
-    # 자동 인사이트 요약 브리핑
     safe_age = df[df["High_Risk"] == 0]["building_age"].median()
     risk_age = df[df["High_Risk"] == 1]["building_age"].median()
     safe_over = df[df["High_Risk"] == 0]["overvaluation_ratio"].median()
     risk_over = df[df["High_Risk"] == 1]["overvaluation_ratio"].median()
     st.info(
-        f"💡 **핵심 포트폴리오 진단 브리핑:** 고위험 매물군은 안전 매물군 대비 건물 노후도(중위값)가 **{risk_age - safe_age:.0f}년 더 오래되었으며** "
+        f"**포트폴리오 진단 요약:** 고위험 매물군은 안전 매물군 대비 건물 경과연수(중위값)가 **{risk_age - safe_age:.0f}년 더 오래되었으며** "
         f"({safe_age:.0f}년 → {risk_age:.0f}년), 동일 행정구역 시세 대비 고평가 비율이 **{(risk_over - safe_over)*100:.1f}%p 더 높게** 형성되어 있습니다."
     )
 
-    # 1-2. 데이터 요약 & 기초 통계량 (접이식/탭 구성으로 깔끔하게 정리)
-    with st.expander("📋 데이터 구조 · 변수 명세서 및 기초 통계량 상세 확인", expanded=False):
+    with st.expander("데이터 구조 · 변수 명세서 및 기초 통계량 상세 확인", expanded=False):
         tab_info, tab_stat, tab_raw = st.tabs(["전체 변수 명세표", "기초 통계량 요약표", "실거래 데이터 샘플 (상위 50건)"])
         with tab_info:
             info_df = pd.DataFrame({
@@ -231,13 +221,12 @@ if menu == "1. 포트폴리오 & 심층 EDA":
             st.dataframe(df.head(50), use_container_width=True)
     st.divider()
 
-    # 1-3. 타깃(고위험군 vs 안전군) 비교 심층 분석
-    st.subheader("🔍 [심층 비교 1] 고위험 매물 vs 안전 매물 핵심 특성 분포")
+    st.subheader("고위험 매물 vs 안전 매물 핵심 특성 분포")
     col_a, col_b = st.columns(2)
     with col_a:
         fig_violin1 = px.violin(
             df, x="Risk_Label", y="building_age", color="Risk_Label", box=True,
-            color_discrete_map={"안전 매물(정상)": "#0d9488", "고위험 매물(주의)": "#e11d48"},
+            color_discrete_map={"안전 매물(정상)": "#0284c7", "고위험 매물(주의)": "#dc2626"},
             labels={"Risk_Label": "리스크 등급", "building_age": "건물 노후도 (년)"},
             title="건물 노후도(연식)에 따른 리스크 분포 차이"
         )
@@ -248,7 +237,7 @@ if menu == "1. 포트폴리오 & 심층 EDA":
         df_clip_over = df[df["overvaluation_ratio"] <= 2.2]
         fig_violin2 = px.violin(
             df_clip_over, x="Risk_Label", y="overvaluation_ratio", color="Risk_Label", box=True,
-            color_discrete_map={"안전 매물(정상)": "#0d9488", "고위험 매물(주의)": "#e11d48"},
+            color_discrete_map={"안전 매물(정상)": "#0284c7", "고위험 매물(주의)": "#dc2626"},
             labels={"Risk_Label": "리스크 등급", "overvaluation_ratio": "지역 시세 대비 고평가 지수 (1.0=평균)"},
             title="지역 평균 대비 고평가 비율 분포 차이 (핵심 구간 확대)"
         )
@@ -256,8 +245,7 @@ if menu == "1. 포트폴리오 & 심층 EDA":
         fig_violin2.update_layout(showlegend=False)
         st.plotly_chart(fig_violin2, use_container_width=True)
 
-    # 1-4. [신규 추가] 건축연대별 시세·위험률 추이 & 등급×상태 리스크 매트릭스
-    st.subheader("📈 [심층 비교 2] 건축연대별 리스크 추이 & 등급·관리상태 교차 위험 매트릭스")
+    st.subheader("건축연대별 리스크 추이 및 등급·관리상태 교차 위험 매트릭스")
     col_c1, col_c2 = st.columns(2)
     with col_c1:
         decade_df = df.groupby("built_decade").agg(
@@ -271,7 +259,7 @@ if menu == "1. 포트폴리오 & 심층 EDA":
             secondary_y=False
         )
         fig_combo.add_trace(
-            go.Scatter(x=decade_df["built_decade"].astype(str) + "년대", y=decade_df["risk_pct"], name="고위험 매물 비중 (%)", mode="lines+markers", line=dict(color="#e11d48", width=3)),
+            go.Scatter(x=decade_df["built_decade"].astype(str) + "년대", y=decade_df["risk_pct"], name="고위험 매물 비중 (%)", mode="lines+markers", line=dict(color="#dc2626", width=3)),
             secondary_y=True
         )
         fig_combo.update_layout(title="건축연대별 평균 담보 시세 vs 고위험 비중(%) 추이", legend=dict(orientation="h", y=1.12))
@@ -280,7 +268,6 @@ if menu == "1. 포트폴리오 & 심층 EDA":
         st.plotly_chart(fig_combo, use_container_width=True)
 
     with col_c2:
-        matrix_df = df.pivot_table(index="grade", columns="condition", values="High_Risk", aggfunc="mean") * 100
         matrix_df = df.pivot_table(index="grade", columns="condition", values="High_Risk", aggfunc="mean") * 100
         fig_matrix = px.imshow(
             matrix_df, text_auto=".1f", color_continuous_scale="YlOrRd", aspect="auto",
@@ -292,8 +279,7 @@ if menu == "1. 포트폴리오 & 심층 EDA":
         fig_matrix.update_yaxes(dtick=1)
         st.plotly_chart(fig_matrix, use_container_width=True)
 
-    # 1-5. 공간(GIS) 담보가치 & 리스크 지도 + 행정구역별 위험 TOP 15
-    st.subheader("🗺️ [공간 GIS 탐색] 지역별 담보 리스크 지도 및 고위험 집중 구역 TOP 15")
+    st.subheader("지역별 담보 리스크 공간 분포 및 고위험 집중 구역 TOP 15")
     map_col1, map_col2 = st.columns([1.4, 1])
     with map_col1:
         map_filter = st.radio("지도 표시 필터", ["전체 매물 샘플 (3,000건)", "고위험 집중 경보 매물만 보기"], horizontal=True)
@@ -301,11 +287,11 @@ if menu == "1. 포트폴리오 & 심층 EDA":
         
         fig_map = px.scatter_map(
             df_map, lat="lat", lon="long", color="Risk_Label", size="price",
-            color_discrete_map={"안전 매물(정상)": "#0d9488", "고위험 매물(주의)": "#e11d48"},
+            color_discrete_map={"안전 매물(정상)": "#0284c7", "고위험 매물(주의)": "#dc2626"},
             hover_data={"lat": False, "long": False, "zipcode": True, "price": ":$,.0f", "building_age": True, "grade": True, "overvaluation_ratio": True},
             center={"lat": df["lat"].mean(), "lon": df["long"].mean()},
             zoom=9.0, height=500, map_style="carto-positron",
-            title="King County 행정구역별 담보 리스크 공간 분포"
+            title="행정구역별 담보 리스크 공간 분포"
         )
         st.plotly_chart(fig_map, use_container_width=True)
 
@@ -328,19 +314,17 @@ if menu == "1. 포트폴리오 & 심층 EDA":
         fig_zip.update_layout(height=500, coloraxis_showscale=False)
         st.plotly_chart(fig_zip, use_container_width=True)
 
-    # 1-6. 4차원 다변량 버블 탐색기
-    st.subheader("🫧 [다변량 탐색] 면적 · 시세 · 주택등급 · 리스크 4차원 상호작용")
+    st.subheader("면적 · 시세 · 주택등급 · 리스크 다변량 상호작용")
     sample_df = df.sample(min(1500, len(df)), random_state=42)
     fig_bubble = px.scatter(
         sample_df, x="sqft_living", y="price", color="Risk_Label", size="grade",
-        color_discrete_map={"안전 매물(정상)": "#0d9488", "고위험 매물(주의)": "#e11d48"},
+        color_discrete_map={"안전 매물(정상)": "#0284c7", "고위험 매물(주의)": "#dc2626"},
         labels={"sqft_living": "주거 면적 (sqft)", "price": "주택 시세 ($)", "Risk_Label": "리스크 등급"},
         title="주거 면적 vs 시세 (원 크기: 주택 등급 / 색상: 리스크 등급)"
     )
     st.plotly_chart(fig_bubble, use_container_width=True)
 
-    # 1-7. 상관관계 & 다중공선성(VIF) 정밀 진단
-    st.subheader("📐 [통계 정밀 진단] 상관관계 히트맵 및 다중공선성(VIF) 경고")
+    st.subheader("상관관계 히트맵 및 다중공선성(VIF) 진단")
     c_left, c_right = st.columns([1.3, 1])
     num_cols = ["price", "bedrooms", "bathrooms", "sqft_living", "floors", "grade", "building_age", "overvaluation_ratio", "High_Risk"]
     with c_left:
@@ -359,19 +343,18 @@ if menu == "1. 포트폴리오 & 심층 EDA":
             "변수명": vif_features,
             "VIF 지수": [round(variance_inflation_factor(X_vif.values, i), 2) for i in range(len(vif_features))]
         })
-        vif_data["진단 결과"] = np.where(vif_data["VIF 지수"] > 10, "⚠️ 주의 (높은 상관성)", "✅ 양호")
+        vif_data["진단 결과"] = np.where(vif_data["VIF 지수"] > 10, "주의 (높은 상관성)", "양호")
         st.dataframe(vif_data, use_container_width=True, hide_index=True)
-        st.info("💡 VIF가 10을 초과하는 변수는 다음 '2. 데이터 전처리' 단계에서 표준화(Scaling)하거나 선택적으로 제외하여 모델 신뢰성을 높입니다.")
+        st.info("VIF가 10을 초과하는 변수는 다음 '02. 데이터 정제 및 파생변수 설계' 단계에서 표준화(Scaling)하거나 선택적으로 제외하여 모델 안정성을 확보합니다.")
 
 # =========================================================
-# 모듈 2: 데이터 전처리 & 파생변수 공학 (엔터프라이즈 풀버전)
+# 모듈 2: 데이터 정제 및 파생변수 설계
 # =========================================================
-elif menu == "2. 데이터 전처리 & 파생변수 공학":
-    st.header("⚙️ 2. 실전 데이터 품질 감사 및 전처리·파생변수 공학")
-    st.write("원본 데이터의 무결성(결측·중복·변수 구조)을 정밀 진단한 뒤, 공기업 보증 심사 기준에 맞춘 정제 및 파생변수 파이프라인을 실행합니다.")
+elif menu == "02. 데이터 정제 및 파생변수 설계":
+    st.header("02. 데이터 품질 감사 및 정제·파생변수 파이프라인")
+    st.write("원본 데이터의 무결성(결측·중복·변수 구조)을 진단한 뒤, 주택담보 보증 심사 기준에 맞춘 정제 및 파생변수 파이프라인을 실행합니다.")
 
-    # 2-1. 원본 데이터 품질 감사 (Data Quality Audit)
-    st.subheader("🔍 1) 원본 데이터 품질 감사 (Data Quality Audit)")
+    st.subheader("1) 원본 데이터 품질 감사 (Data Quality Audit)")
     raw_rows, raw_cols = df.shape
     dup_cnt = df.duplicated().sum()
     null_cnt = df.isnull().sum().sum()
@@ -382,7 +365,7 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
     q3.metric("결측치 총 건수 (Missing)", f"{null_cnt} 건", "무결성 양호" if null_cnt == 0 else "정제 필요")
     q4.metric("중복 데이터 행 수 (Duplicates)", f"{dup_cnt} 건", "중복 없음" if dup_cnt == 0 else "제거 권장")
 
-    with st.expander("📑 전체 변수 명세서 및 결측률·데이터 타입 상세 확인 (클릭하여 펼치기)", expanded=True):
+    with st.expander("전체 변수 명세서 및 결측률·데이터 타입 상세 확인", expanded=True):
         var_desc_map = {
             "price": "주택 실거래 시세 ($)", "bedrooms": "침실 수", "bathrooms": "욕실 수",
             "sqft_living": "실내 주거 면적 (sqft)", "sqft_lot": "대지 면적 (sqft)", "floors": "건물 층수",
@@ -407,8 +390,7 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
 
     st.divider()
 
-    # 2-2. 4단계 전처리 및 파생변수 공학 설정
-    st.subheader("🛠️ 2) 전처리 파이프라인 및 금융 파생변수 설정")
+    st.subheader("2) 전처리 파이프라인 및 금융 파생변수 설정")
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**[Step 1] 데이터 클리닝 (중복·결측 정제)**")
@@ -417,14 +399,14 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
 
         st.markdown("**[Step 2] 이상치(초고가 호화주택) 정제 설정**")
         outlier_opt = st.radio(
-            "상위 초고가 주택 처리 방식 (서민·중산층 보증 기준 맞추기)",
+            "상위 초고가 주택 처리 방식 (일반 주거용 보증 기준 맞추기)",
             ["제거 안 함 (원본 유지)", "상위 1% 초고가 이상치 제거 (권장)", "IQR(1.5배) 기준 이상치 제거"],
             index=1
         )
 
     with col2:
         st.markdown("**[Step 3] 금융·부동산 도메인 파생변수 생성**")
-        add_ltv_proxy = st.checkbox("잠재 전세가율(estimated_ltv) 시뮬레이션 변수 생성", value=True)
+        add_ltv_proxy = st.checkbox("잠재 담보인정비율(estimated_ltv) 변수 생성", value=True)
         add_loc_score = st.checkbox("입지 프리미엄 지수(location_premium) 생성", value=True)
         add_space_ratio = st.checkbox("주거 공간 효율 비율(living_to_lot_ratio) 생성", value=True)
 
@@ -435,11 +417,10 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
     default_features = ["bedrooms", "bathrooms", "sqft_living", "floors", "waterfront", "view", "condition", "grade", "building_age", "overvaluation_ratio"]
     selected_features = st.multiselect("최종 모델 투입 독립변수(X) 선택", default_features, default=default_features)
 
-    if st.button("🚀 전처리 파이프라인 실행 및 데이터 확정", type="primary", use_container_width=True):
+    if st.button("전처리 파이프라인 실행 및 데이터 확정", type="primary", use_container_width=True):
         df_p = df.copy()
         before_cnt = len(df_p)
 
-        # 중복 및 결측 처리
         if drop_dup_opt:
             df_p = df_p.drop_duplicates()
         num_c = df_p.select_dtypes(include=[np.number]).columns
@@ -450,7 +431,6 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
         else:
             df_p = df_p.dropna()
 
-        # 이상치 제거
         if outlier_opt == "상위 1% 초고가 이상치 제거 (권장)":
             upper = df_p["price"].quantile(0.99)
             df_p = df_p[df_p["price"] <= upper]
@@ -459,7 +439,6 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
             iqr = q3 - q1
             df_p = df_p[(df_p["price"] >= q1 - 1.5 * iqr) & (df_p["price"] <= q3 + 1.5 * iqr)]
 
-        # 파생변수 생성
         final_features = list(selected_features)
         if add_ltv_proxy:
             np.random.seed(42)
@@ -477,7 +456,7 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
         st.session_state.scale_opt = scale_opt
         st.session_state.test_ratio = test_ratio
 
-        st.success(f"✅ 전처리 파이프라인 완료! 원본 {before_cnt:,}건 → 정제 후 {len(df_p):,}건 (최종 학습 변수: {len(final_features)}개)")
+        st.success(f"전처리 파이프라인 완료: 원본 {before_cnt:,}건 → 정제 후 {len(df_p):,}건 (최종 학습 변수: {len(final_features)}개)")
 
         removed_cnt = before_cnt - len(df_p)
         train_cnt = int(len(df_p) * (1 - test_ratio))
@@ -493,11 +472,11 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
             fig_before = px.histogram(df, x="price", nbins=50, title="전처리 전(Before) 주택 가격 분포", color_discrete_sequence=["#94a3b8"])
             st.plotly_chart(fig_before, use_container_width=True)
         with c_b2:
-            fig_after = px.histogram(df_p, x="price", nbins=50, title="전처리 후(After) 정제된 담보 가격 분포", color_discrete_sequence=["#0d9488"])
+            fig_after = px.histogram(df_p, x="price", nbins=50, title="전처리 후(After) 정제된 담보 가격 분포", color_discrete_sequence=["#0284c7"])
             st.plotly_chart(fig_after, use_container_width=True)
 
         if scale_opt:
-            st.subheader("📏 스케일링(StandardScaler) 적용 전·후 변수 분포 비교")
+            st.subheader("스케일링(StandardScaler) 적용 전·후 변수 분포 비교")
             scaler_preview = StandardScaler()
             scaled_vals = scaler_preview.fit_transform(df_p[final_features])
             scaled_df = pd.DataFrame(scaled_vals, columns=final_features)
@@ -510,23 +489,24 @@ elif menu == "2. 데이터 전처리 & 파생변수 공학":
             })
             st.dataframe(comp_df, use_container_width=True, hide_index=True)
 
-        st.subheader("📋 파생변수 결합 완료 최종 데이터 샘플 (상위 10건)")
+        st.subheader("파생변수 결합 완료 최종 데이터 샘플 (상위 10건)")
         preview_cols = ["price", "building_age", "overvaluation_ratio"] + [c for c in ["estimated_ltv", "location_premium", "living_to_lot_ratio"] if c in df_p.columns] + ["Risk_Label"]
         st.dataframe(df_p[preview_cols].head(10), use_container_width=True, hide_index=True)
+
 # =========================================================
-# 모듈 3: AI 심사 엔진 학습 및 검증 (로지스틱 · 의사결정나무 · 인공신경망)
+# 모듈 3: 예측 모델 학습 및 성능 검증
 # =========================================================
-elif menu == "3. AI 심사 엔진 학습 및 검증":
-    st.header("🧠 3. 챔피언-챌린저 AI 심사 모델 학습 및 신뢰성 검증")
+elif menu == "03. 예측 모델 학습 및 성능 검증":
+    st.header("03. 예측 모델 성능 비교 및 운영 모델 선정")
     
     if st.session_state.df_processed is None:
-        st.warning("⚠️ 먼저 왼쪽 메뉴의 '2. 데이터 전처리 & 파생변수 공학'에서 [전처리 파이프라인 실행] 버튼을 눌러주세요.")
+        st.warning("먼저 왼쪽 메뉴의 '02. 데이터 정제 및 파생변수 설계'에서 [전처리 파이프라인 실행] 버튼을 눌러주세요.")
         st.stop()
 
     df_p = st.session_state.df_processed
     features = st.session_state.features
 
-    st.info("💡 **금융공기업 3대 심사 엔진 구성:** ① 로지스틱 회귀(감사·규제 대응) ② 의사결정나무(명확한 심사 기준선 도출) ③ 인공신경망 MLP(비선형 사각지대 정밀 탐지)")
+    st.info("**3대 예측 알고리즘 구성:** ① 로지스틱 회귀(감사·규제 대응) ② 의사결정나무(명확한 심사 기준선 도출) ③ 인공신경망 MLP(비선형 리스크 요인 정밀 탐지)")
 
     c1, c2, c3 = st.columns(3)
     with c1:
@@ -536,8 +516,8 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
     with c3:
         mlp_hidden = st.selectbox("인공신경망(MLP) 은닉층 구조", ["(64, 32)", "(32, 16)", "(100, 50)"], index=0)
 
-    if st.button("⚡ 3종 AI 심사 모델 동시 학습 및 검증 시작", type="primary", use_container_width=True):
-        with st.spinner("3종의 AI 모델을 학습하고 성능을 교차 검증 중입니다..."):
+    if st.button("3종 예측 모델 동시 학습 및 검증 시작", type="primary", use_container_width=True):
+        with st.spinner("3종의 분류 모델을 학습하고 성능을 교차 검증 중입니다..."):
             X = df_p[features]
             y = df_p["High_Risk"]
 
@@ -598,11 +578,11 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
 
     if st.session_state.models:
         res_df = st.session_state.results_df
-        st.subheader("📋 모델 성능 종합 비교표")
+        st.subheader("모델 성능 종합 비교표")
         st.dataframe(res_df, use_container_width=True, hide_index=True)
         perf_csv = res_df.to_csv(index=False).encode("utf-8-sig")
         st.download_button(
-            label="📊 AI 모델별 성능 비교 성적표 (CSV) 다운로드",
+            label="모델별 성능 비교 성적표 (CSV) 다운로드",
             data=perf_csv,
             file_name="K_SafeGuard_Model_Benchmark_Report.csv",
             mime="text/csv"
@@ -618,7 +598,7 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
                     fill="toself",
                     name=row["모델명"]
                 ))
-            radar_fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0.4, 1.0])), title="3대 AI 모델 다차원 성능 레이더 차트")
+            radar_fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0.4, 1.0])), title="3대 예측 모델 다차원 성능 레이더 차트")
             st.plotly_chart(radar_fig, use_container_width=True)
 
         with col_r2:
@@ -628,7 +608,7 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
         with col_b1:
             dt_model = st.session_state.models["Decision Tree"]
             imp_df = pd.DataFrame({"변수": features, "중요도": dt_model.feature_importances_}).sort_values("중요도", ascending=True)
-            fig_imp = px.bar(imp_df, x="중요도", y="변수", orientation="h", title="핵심 부실 결정 요인 (감사 대응 근거)", color_discrete_sequence=["#1e3a8a"])
+            fig_imp = px.bar(imp_df, x="중요도", y="변수", orientation="h", title="핵심 부실 결정 요인 (심사 기준 근거)", color_discrete_sequence=["#1e3a8a"])
             st.plotly_chart(fig_imp, use_container_width=True)
 
         with col_b2:
@@ -644,18 +624,18 @@ elif menu == "3. AI 심사 엔진 학습 및 검증":
             st.plotly_chart(fig_cm, use_container_width=True)
 
 # =========================================================
-# 모듈 4: 개별 매물 심사 & 동적 보증료 산정기 (핵심 BM)
+# 모듈 4: 개별 담보 심사 및 동적 보증료 산정
 # =========================================================
-elif menu == "4. 개별 매물 심사 & 동적 보증료":
-    st.header("💳 4. 실시간 담보 심사 및 동적 보증료(Dynamic Pricing) 산정기")
+elif menu == "04. 개별 담보 심사 및 동적 보증료 산정":
+    st.header("04. 개별 담보 리스크 심사 및 적정 보증료 산정")
     
     if not st.session_state.models:
-        st.warning("⚠️ 먼저 '3. AI 심사 엔진 학습 및 검증'에서 모델을 학습시켜 주세요.")
+        st.warning("먼저 '03. 예측 모델 학습 및 성능 검증'에서 모델을 학습시켜 주세요.")
         st.stop()
 
-    st.write("신규 보증 신청 주택의 스펙을 입력하면 AI가 **부실 확률(PD), 기대손실액(EL), 적정 보증료율(%), 안전 보증 한도**를 즉시 산출합니다.")
+    st.write("신청 주택의 담보 조건을 입력하면 부실 확률(PD)과 기대손실액(EL)을 기반으로 적정 보증료율 및 권고 한도를 산출합니다.")
 
-    engine_choice = st.selectbox("심사에 적용할 AI 엔진 선택", list(st.session_state.models.keys()), index=2)
+    engine_choice = st.selectbox("심사에 적용할 예측 모델 선택", list(st.session_state.models.keys()), index=1)
     
     c1, c2, c3 = st.columns(3)
     with c1:
@@ -711,45 +691,48 @@ elif menu == "4. 개별 매물 심사 & 동적 보증료":
             mode="gauge+number",
             value=pd_prob * 100,
             number={"suffix": "%"},
-            title={"text": "AI 예측 보증사고 확률 (PD)"},
+            title={"text": "예상 보증사고 확률 (PD)"},
             gauge={
                 "axis": {"range": [0, 100]},
                 "bar": {"color": "#1e3a8a"},
                 "steps": [
-                    {"range": [0, 30], "color": "#ccfbf1"},
+                    {"range": [0, 30], "color": "#e0f2fe"},
                     {"range": [30, 65], "color": "#fef3c7"},
-                    {"range": [65, 100], "color": "#ffe4e6"}
+                    {"range": [65, 100], "color": "#fee2e2"}
                 ],
-                "threshold": {"line": {"color": "red", "width": 4}, "thickness": 0.75, "value": 65}
+                "threshold": {"line": {"color": "#dc2626", "width": 4}, "thickness": 0.75, "value": 65}
             }
         ))
         st.plotly_chart(fig_gauge, use_container_width=True)
 
     with res_c2:
-        st.subheader("📑 AI 심사 판정 및 동적 가격(Pricing) 리포트")
+        st.subheader("심사 결과 및 보증 조건 산출 내역")
         if pd_prob < 0.30 and in_deposit <= safe_limit:
-            st.success("✅ **최종 판정: 정상 승인 (우량 담보)** — 기본 우대 보증료율 적용 가능")
+            st.success("**최종 판정: 정상 승인 (우량 담보)** — 기본 우대 보증료율 적용 가능")
         elif pd_prob < 0.65:
-            st.warning("⚠️ **최종 판정: 조건부 승인 (리스크 할증 또는 한도 감액 권고)**")
+            st.warning("**최종 판정: 조건부 승인 (리스크 할증 또는 한도 감액 권고)**")
         else:
-            st.error("🚨 **최종 판정: 보증 거절 권고 (고위험 부실 우려 매물)**")
+            st.error("**최종 판정: 보증 거절 권고 (고위험 부실 우려 매물)**")
 
         m1, m2, m3 = st.columns(3)
         m1.metric("기대손실액 (EL)", f"${expected_loss:,.0f}", f"손실률(LGD) {lgd*100:.1f}%")
         m2.metric("적정 동적 보증료율", f"{dynamic_fee_rate*100:.2f}%", f"기존 0.15% 대비 +{(dynamic_fee_rate-base_fee_rate)*100:.2f}%p")
-        m3.metric("AI 안전 보증 한도", f"${safe_limit:,.0f}", f"신청액 대비 ${safe_limit - in_deposit:,.0f}")
+        m3.metric("권고 안전 보증 한도", f"${safe_limit:,.0f}", f"신청액 대비 ${safe_limit - in_deposit:,.0f}")
 
-        st.info(f"📌 **심사역 안내 문구:** 현재 신청 보증금(${in_deposit:,})은 시세 대비 {ltv_current*100:.1f}% 수준이며, 건물 노후도({in_age}년)와 고평가 지수({in_overval})를 반영할 때 연 **{dynamic_fee_rate*100:.2f}%**의 보증료를 책정해야 공기업 기금 적자를 방어할 수 있습니다.")
+        st.info(
+            f"**심사 의견:** 신청 보증금(${in_deposit:,})은 감정가 대비 {ltv_current*100:.1f}% 수준입니다. "
+            f"건물 경과연수({in_age}년)와 시세 괴리율({in_overval})을 반영해 연 **{dynamic_fee_rate*100:.2f}%**의 보증료율 적용 또는 한도 조정을 권고합니다."
+        )
 
 # =========================================================
 # 모듈 5: 거시경제 스트레스 테스트 & 리포트 다운로드
 # =========================================================
-elif menu == "5. 거시경제 스트레스 테스트":
-    st.header("📉 5. 거시경제 위기상황분석 (Macro Stress Test)")
-    st.write("부동산 경기 침체로 전국 집값이 급락할 경우, 공기업 전체 보증 포트폴리오의 **예상 대위변제 손실액**과 **동적 보증료 방어 효과**를 시뮬레이션합니다.")
+elif menu == "05. 거시경제 스트레스 테스트":
+    st.header("05. 거시경제 스트레스 테스트 (시세 하락 시나리오 분석)")
+    st.write("주택 가격 하락 시나리오에 따른 포트폴리오 예상 대위변제 손실액과 한도 규제 적용 시의 손실 절감 효과를 시뮬레이션합니다.")
 
     if st.session_state.df_processed is None:
-        st.warning("⚠️ 먼저 '2. 데이터 전처리 & 파생변수 공학'에서 전처리를 실행해 주세요.")
+        st.warning("먼저 '02. 데이터 정제 및 파생변수 설계'에서 전처리를 실행해 주세요.")
         st.stop()
 
     df_p = st.session_state.df_processed.copy()
@@ -781,22 +764,22 @@ elif menu == "5. 거시경제 스트레스 테스트":
     saved_amount = loss_no_policy[idx] - loss_with_ai[idx]
 
     k1, k2, k3 = st.columns(3)
-    k1.metric(f"집값 -{price_drop}% 시 기존 예상 손실", f"${loss_no_policy[idx]:,.1f} 백만", "정책 미개입 기준", delta_color="inverse")
-    k2.metric(f"AI 동적 한도 적용 후 예상 손실", f"${loss_with_ai[idx]:,.1f} 백만", f"LTV {ltv_cap}% + 고위험 차등 적용")
-    k3.metric("공기업 기금 손실 방어(절감) 효과", f"${saved_amount:,.1f} 백만", f"손실액 {(saved_amount/max(1, loss_no_policy[idx]))*100:.1f}% 감소")
+    k1.metric(f"시세 -{price_drop}% 시 기존 예상 손실", f"${loss_no_policy[idx]:,.1f} 백만", "정책 미개입 기준", delta_color="inverse")
+    k2.metric(f"동적 한도 적용 후 예상 손실", f"${loss_with_ai[idx]:,.1f} 백만", f"LTV {ltv_cap}% + 고위험 차등 적용")
+    k3.metric("보증 기금 손실 절감 효과", f"${saved_amount:,.1f} 백만", f"손실액 {(saved_amount/max(1, loss_no_policy[idx]))*100:.1f}% 감소")
 
     fig_stress = go.Figure()
-    fig_stress.add_trace(go.Scatter(x=[f"-{d}%" for d in drops], y=loss_no_policy, mode="lines+markers", name="기존 일률 보증 방식 (예상 손실)", line=dict(color="#e11d48", width=3)))
-    fig_stress.add_trace(go.Scatter(x=[f"-{d}%" for d in drops], y=loss_with_ai, mode="lines+markers", name="K-SafeGuard AI 동적 관리 적용 (예상 손실)", line=dict(color="#0d9488", width=3)))
-    fig_stress.update_layout(title="집값 하락 시나리오별 공기업 누적 대위변제 손실액 비교 (단위: 백만 $)", xaxis_title="부동산 시세 하락률", yaxis_title="예상 손실액 ($M)")
+    fig_stress.add_trace(go.Scatter(x=[f"-{d}%" for d in drops], y=loss_no_policy, mode="lines+markers", name="기존 일률 보증 방식 (예상 손실)", line=dict(color="#dc2626", width=3)))
+    fig_stress.add_trace(go.Scatter(x=[f"-{d}%" for d in drops], y=loss_with_ai, mode="lines+markers", name="K-SafeGuard 동적 관리 적용 (예상 손실)", line=dict(color="#0284c7", width=3)))
+    fig_stress.update_layout(title="시세 하락 시나리오별 누적 대위변제 손실액 비교 (단위: 백만 $)", xaxis_title="부동산 시세 하락률", yaxis_title="예상 손실액 ($M)")
     st.plotly_chart(fig_stress, use_container_width=True)
 
     st.divider()
-    st.subheader("📥 경영진 보고용 리포트 및 고위험 매물 리스트 다운로드")
+    st.subheader("심사 리포트 및 고위험군 관리 대장 추출")
     high_risk_export = df_p[df_p["High_Risk"] == 1][["price", "sqft_living", "building_age", "grade", "overvaluation_ratio", "lat", "long"]].head(500)
     csv_bytes = high_risk_export.to_csv(index=False).encode("utf-8-sig")
     st.download_button(
-        label="📄 집중 관리 대상 고위험 담보 매물 리스트 (CSV) 다운로드",
+        label="집중 관리 대상 고위험 담보 매물 리스트 (CSV) 다운로드",
         data=csv_bytes,
         file_name="K_SafeGuard_HighRisk_Report.csv",
         mime="text/csv"
