@@ -238,6 +238,56 @@ st.markdown("""
         border: 1px solid #E2E8E5 !important;
         border-radius: 10px !important;
     }
+    /* 슬라이더 트랙 & 핸들 에메랄드 스타일링 */
+    div[data-testid="stSlider"] div[data-baseweb="slider"] > div > div {
+        background-color: #D1FAE5 !important;
+        height: 6px !important;
+        border-radius: 999px !important;
+    }
+    div[data-testid="stSlider"] div[data-baseweb="slider"] > div > div > div {
+        background-color: #059669 !important;
+    }
+    div[data-testid="stSlider"] div[role="slider"] {
+        background-color: #064E3B !important;
+        border: 3px solid #FFFFFF !important;
+        box-shadow: 0 2px 6px rgba(6, 78, 59, 0.35) !important;
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    /* 드롭다운(Selectbox), 멀티셀렉트, 숫자 입력창 카드형 테두리 */
+    div[data-baseweb="select"] > div,
+    div[data-testid="stNumberInput"] > div > div {
+        background-color: #FFFFFF !important;
+        border: 1.5px solid #D1DDD8 !important;
+        border-radius: 8px !important;
+        box-shadow: 0 1px 3px rgba(15, 35, 28, 0.04) !important;
+        transition: all 0.2s ease !important;
+    }
+    div[data-baseweb="select"] > div:hover,
+    div[data-testid="stNumberInput"] > div > div:hover {
+        border-color: #059669 !important;
+    }
+    div[data-baseweb="select"] > div:focus-within,
+    div[data-testid="stNumberInput"] > div > div:focus-within {
+        border-color: #065F46 !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+    }
+
+    /* 멀티셀렉트 선택 태그(칩) 에메랄드 톤 통일 */
+    span[data-baseweb="tag"] {
+        background-color: #ECFDF5 !important;
+        color: #065F46 !important;
+        border: 1px solid #A7F3D0 !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+    }
+
+    /* 체크박스 & 본문 라디오 버튼 강조 */
+    div[data-testid="stCheckbox"] label span:first-child {
+        border-radius: 5px !important;
+        border-color: #059669 !important;
+    }
 </style>
 
 <div class="hero-banner">
@@ -475,11 +525,14 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
             go.Scatter(x=decade_df["built_decade"].astype(str) + "년대", y=decade_df["risk_pct"], name="고위험 매물 비중 (%)", mode="lines+markers", line=dict(color="#DC2626", width=3)),
             secondary_y=True
         )
-        fig_combo.update_layout(title="건축연대별 평균 담보 시세 vs 고위험 비중(%) 추이", legend=dict(orientation="h", y=1.12))
+        fig_combo.update_layout(
+            title=dict(text="건축연대별 평균 담보 시세 vs 고위험 비중(%) 추이", y=0.96, x=0.02),
+            legend=dict(orientation="h", y=1.08, x=0.0),
+            margin=dict(l=30, r=30, t=80, b=35)
+        )
         fig_combo.update_yaxes(title_text="평균 시세 ($)", secondary_y=False)
         fig_combo.update_yaxes(title_text="고위험 비중 (%)", secondary_y=True)
-        st.plotly_chart(style_chart(fig_combo), use_container_width=True)
-
+        st.plotly_chart(fig_combo, use_container_width=True)
     with col_c2:
         matrix_df = df.pivot_table(index="grade", columns="condition", values="High_Risk", aggfunc="mean") * 100
         fig_matrix = px.imshow(
