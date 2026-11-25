@@ -15,7 +15,66 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 # ---------------------------------------------------------
 # 0. 페이지 기본 설정 & 보안 로그인 (비밀번호: kmis)
 # ---------------------------------------------------------
-st.set_page_config(page_title="K-SafeGuard Engine | 금융공기업 AI 리스크 관제", page_icon="🏛️", layout="wide")
+st.set_page_config(page_title="K-SafeGuard | 주택담보 리스크 평가 시스템", layout="wide")
+
+st.markdown("""
+<style>
+    /* 전체 배경 및 기본 폰트 컬러를 밝은 슬레이트 톤으로 고정 */
+    .stApp {
+        background-color: #F8FAFC !important;
+        color: #0F172A !important;
+    }
+    header[data-testid="stHeader"] {
+        background-color: rgba(248, 250, 252, 0.9) !important;
+    }
+    /* 빨간색 슬라이더·버튼 포인트를 딥 네이비 블루로 변경 */
+    :root {
+        --primary-color: #1E3A8A !important;
+    }
+    div.stButton > button:first-child,
+    div.stDownloadButton > button {
+        background-color: #1E3A8A !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+    }
+    /* 지표(Metric) 카드 테두리 및 그림자 */
+    div[data-testid="stMetric"] {
+        background-color: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+        padding: 1rem 1.2rem !important;
+        border-radius: 8px !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    }
+    /* 세련된 다크 네이비 상단 헤더 */
+    .enterprise-header {
+        background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+        padding: 1.8rem 2.2rem;
+        border-radius: 10px;
+        border-left: 6px solid #3B82F6;
+        margin-bottom: 1.8rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+    }
+    .enterprise-header h1 {
+        font-size: 1.65rem !important;
+        font-weight: 700 !important;
+        margin: 0 0 0.45rem 0 !important;
+        letter-spacing: -0.02em;
+        color: #FFFFFF !important;
+    }
+    .enterprise-header p {
+        font-size: 0.92rem !important;
+        color: #94A3B8 !important;
+        margin: 0 !important;
+    }
+</style>
+
+<div class="enterprise-header">
+    <h1>K-SafeGuard | 주택담보 리스크 평가 및 동적 보증료 산정 시스템</h1>
+    <p>Mortgage Default Risk Scoring & Dynamic Guarantee Pricing Platform</p>
+</div>
+""", unsafe_allow_html=True)
 
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
