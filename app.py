@@ -299,6 +299,63 @@ st.markdown("""
         padding: 1.2rem !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
     }
+/* 1. 체크박스 → 개별 옵션 카드 패널로 업그레이드 */
+    div[data-testid="stCheckbox"] {
+        background-color: #F8FAF9 !important;
+        border: 1px solid #DCE7E2 !important;
+        border-radius: 10px !important;
+        padding: 0.65rem 0.9rem !important;
+        margin-bottom: 0.45rem !important;
+        transition: all 0.2s ease !important;
+    }
+    div[data-testid="stCheckbox"]:hover {
+        background-color: #ECFDF5 !important;
+        border-color: #34D399 !important;
+        transform: translateX(2px);
+    }
+    /* 체크된 항목은 에메랄드 테두리 + 연한 민트 배경으로 강조 */
+    div[data-testid="stCheckbox"]:has(input:checked) {
+        background-color: #ECFDF5 !important;
+        border: 1.5px solid #059669 !important;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.1) !important;
+    }
+    div[data-testid="stCheckbox"] label p {
+        font-weight: 600 !important;
+        color: #14241E !important;
+        font-size: 0.9rem !important;
+    }
+
+    /* 2. 슬라이더 → 두꺼운 트랙 + 입체 핸들 + 숫자 배지 스타일 */
+    div[data-testid="stSlider"] {
+        background-color: #F8FAF9 !important;
+        border: 1px solid #DCE7E2 !important;
+        border-radius: 10px !important;
+        padding: 0.75rem 1rem 0.65rem 1rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    /* 슬라이더 바 두께 확대 (기존 4px → 8px) */
+    div[data-testid="stSlider"] div[data-baseweb="slider"] > div > div {
+        height: 8px !important;
+        border-radius: 999px !important;
+    }
+    /* 슬라이더 동그란 손잡이 확대 및 이중 링 디자인 */
+    div[data-testid="stSlider"] div[role="slider"] {
+        width: 22px !important;
+        height: 22px !important;
+        background-color: #064E3B !important;
+        border: 3px solid #FFFFFF !important;
+        box-shadow: 0 0 0 2px #059669, 0 3px 8px rgba(0, 0, 0, 0.2) !important;
+    }
+    /* 슬라이더 위 현재 수치 텍스트를 작은 배지처럼 표시 */
+    div[data-testid="stThumbValue"] {
+        background-color: #064E3B !important;
+        color: #FFFFFF !important;
+        padding: 2px 8px !important;
+        border-radius: 6px !important;
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+        top: -28px !important;
+    }
 </style>
 
 <div class="hero-banner">
