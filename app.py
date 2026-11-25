@@ -151,13 +151,6 @@ if "models" not in st.session_state:
 # ---------------------------------------------------------
 # 상단 헤더 & 사이드바 네비게이션
 # ---------------------------------------------------------
-st.markdown("""
-    <div style='background: linear-gradient(90deg, #1e3a8a 0%, #0d9488 100%); padding: 22px 30px; border-radius: 12px; color: white; margin-bottom: 20px;'>
-        <h2 style='margin:0;'>🏛️ K-SafeGuard Engine : AI 담보 리스크 & 동적 보증 최적화 솔루션</h2>
-        <p style='margin:5px 0 0 0; opacity: 0.9;'>주택도시보증공사(HUG) · 한국주택금융공사(HF) 리스크관리부 의사결정 지원 시스템</p>
-    </div>
-""", unsafe_allow_html=True)
-
 with st.sidebar:
     st.header("📌 업무 모듈 선택")
     menu = st.radio(
