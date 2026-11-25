@@ -40,28 +40,52 @@ st.markdown("""
         --primary-color: #065F46 !important;
     }
 
-    /* 사이드바 스타일링: 다크 슬레이트 포인트 & 카드 메뉴 */
+    /* 사이드바: 상용 핀테크 대시보드형 네비게이션 메뉴 */
     section[data-testid="stSidebar"] {
         background-color: #FFFFFF !important;
         border-right: 1px solid #E2E8E5 !important;
-        box-shadow: 4px 0 18px rgba(15, 35, 28, 0.03);
+        box-shadow: 4px 0 20px rgba(15, 35, 28, 0.04);
     }
-    section[data-testid="stSidebar"] .stRadio > div {
-        gap: 0.45rem;
+    /* 라디오 기본 동그라미 아이콘 숨김 */
+    section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label > div:first-child {
+        display: none !important;
     }
-    section[data-testid="stSidebar"] .stRadio label {
-        background-color: #F8FAF9;
-        border: 1px solid #E2E8E5;
-        border-radius: 8px;
-        padding: 0.7rem 0.95rem !important;
-        transition: all 0.2s ease;
-        font-weight: 600;
-        color: #1E293B;
+    section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] {
+        gap: 0.5rem;
     }
-    section[data-testid="stSidebar"] .stRadio label:hover {
-        border-color: #059669;
-        background-color: #ECFDF5;
-        color: #064E3B;
+    /* 비활성 메뉴 카드 */
+    section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label {
+        background-color: #F8FAF9 !important;
+        border: 1px solid #E5EAE7 !important;
+        border-left: 4px solid transparent !important;
+        border-radius: 10px !important;
+        padding: 0.78rem 1rem !important;
+        margin: 0 !important;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label p {
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        color: #374151 !important;
+    }
+    /* 마우스 호버 효과 */
+    section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:hover {
+        background-color: #ECFDF5 !important;
+        border-color: #A7F3D0 !important;
+        transform: translateX(3px);
+    }
+    /* 현재 선택된 활성 메뉴 (딥 에메랄드 강조 카드) */
+    section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:has(input:checked) {
+        background: linear-gradient(135deg, #064E3B 0%, #065F46 100%) !important;
+        border: 1px solid #047857 !important;
+        border-left: 5px solid #34D399 !important;
+        box-shadow: 0 6px 14px rgba(6, 78, 59, 0.22) !important;
+        transform: translateX(3px);
+    }
+    section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:has(input:checked) p {
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
     }
 
     /* 버튼 스타일링: 딥 에메랄드 메탈릭 톤 */
@@ -311,9 +335,13 @@ if "models" not in st.session_state:
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("""
-    <div style="padding: 0.4rem 0 0.8rem 0; border-bottom: 1px solid #E2E8E5; margin-bottom: 1rem;">
-        <div style="font-size: 0.72rem; font-weight: 800; color: #059669; letter-spacing: 0.08em;">WORKFLOW</div>
-        <div style="font-size: 1.1rem; font-weight: 800; color: #111827;">업무 프로세스 선택</div>
+    <div style="background: linear-gradient(135deg, #0B1915 0%, #132E25 100%); padding: 1.1rem 1.15rem; border-radius: 12px; margin-bottom: 1.2rem; border: 1px solid rgba(52, 211, 153, 0.25);">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.35rem;">
+            <span style="font-size:0.7rem; font-weight:800; color:#6EE7B7; letter-spacing:0.08em;">K-SAFEGUARD</span>
+            <span style="font-size:0.68rem; color:#34D399; background:rgba(16,185,129,0.18); padding:2px 7px; border-radius:999px; font-weight:700;">● ONLINE</span>
+        </div>
+        <div style="font-size:1.08rem; font-weight:800; color:#FFFFFF; letter-spacing:-0.02em;">리스크 관제 워크플로우</div>
+        <div style="font-size:0.78rem; color:#9CA3AF; margin-top:0.2rem;">5-Stage Underwriting Pipeline</div>
     </div>
     """, unsafe_allow_html=True)
     menu = st.radio(
