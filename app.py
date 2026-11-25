@@ -1030,24 +1030,30 @@ elif menu == "04. 개별 담보 심사 및 동적 보증료 산정":
     res_c1, res_c2 = st.columns([1, 1.3])
     
     with res_c1:
-        fig_gauge = go.Figure(go.Indicator(
-            mode="gauge+number",
-            value=pd_prob * 100,
-            number={"suffix": "%", "font": {"color": "#111827", "size": 44}},
-            title={"text": "예상 보증사고 확률 (PD)", "font": {"size": 16, "color": "#065F46"}},
-            gauge={
-                "axis": {"range": [0, 100]},
-                "bar": {"color": "#064E3B"},
-                "steps": [
-                    {"range": [0, 30], "color": "#ECFDF5"},
-                    {"range": [30, 65], "color": "#FEF3C7"},
-                    {"range": [65, 100], "color": "#FEE2E2"}
-                ],
-                "threshold": {"line": {"color": "#DC2626", "width": 4}, "thickness": 0.75, "value": 65}
-            }
-        ))
-        st.plotly_chart(style_chart(fig_gauge, height=340), use_container_width=True)
+        risk_color = "#059669" if pd_prob < 0.30 else ("#D97706" if pd_prob < 0.65 else "#DC2626")
+        risk_grade_txt = "LOW RISK · 우량" if pd_prob < 0.30 else ("MODERATE · 주의" if pd_prob < 0.65 else "HIGH RISK · 경고")
 
+        fig_gauge = go.Figure(data=[go.Pie(
+            values=[pd_prob * 100, 100 - (pd_prob * 100)],
+            hole=0.76,
+            marker_colors=[risk_color, "#E6ECE9"],
+            textinfo="none",
+            hoverinfo="none",
+            sort=False,
+            direction="clockwise"
+        )])
+        fig_gauge.update_layout(
+            title=dict(text="예상 보증사고 확률 (PD)", x=0.5, xanchor="center", font=dict(size=15, color="#111827")),
+            showlegend=False,
+            paper_bgcolor="#FFFFFF",
+            height=330,
+            margin=dict(l=20, r=20, t=55, b=20),
+            annotations=[
+                dict(text=f"<b>{pd_prob*100:.1f}%</b>", x=0.5, y=0.55, font=dict(size=36, color="#111827"), showarrow=False),
+                dict(text=risk_grade_txt, x=0.5, y=0.38, font=dict(size=12, color=risk_color, weight="bold"), showarrow=False)
+            ]
+        )
+        st.plotly_chart(fig_gauge, use_container_width=True)
     with res_c2:
         st.subheader("심사 결과 및 보증 조건 산출 내역")
         if pd_prob < 0.30 and in_deposit <= safe_limit:
