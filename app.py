@@ -13,87 +13,227 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 # ---------------------------------------------------------
-# 0. 페이지 기본 설정 & 보안 로그인 (비밀번호: kmis)
+# 0. 페이지 기본 설정 & 커스텀 디자인 시스템 (Indigo-Violet Fintech UI)
 # ---------------------------------------------------------
-st.set_page_config(page_title="K-SafeGuard | 주택담보 리스크 평가 시스템", layout="wide")
+st.set_page_config(page_title="K-SafeGuard | 주택담보 리스크 인텔리전스", layout="wide")
 
 st.markdown("""
 <style>
-    /* 전체 배경 및 기본 폰트 컬러를 밝은 슬레이트 톤으로 고정 */
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+    html, body, [class*="css"] {
+        font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+    }
+
+    /* 전체 배경: 은은한 쿨 라벤더-슬레이트 톤 */
     .stApp {
-        background-color: #F8FAFC !important;
-        color: #0F172A !important;
+        background: linear-gradient(180deg, #F4F3FF 0%, #F8FAFC 35%, #F1F5F9 100%) !important;
+        color: #1E1B4B !important;
     }
     header[data-testid="stHeader"] {
-        background-color: rgba(248, 250, 252, 0.9) !important;
+        background-color: rgba(244, 243, 255, 0.85) !important;
+        backdrop-filter: blur(8px);
     }
-    /* 빨간색 슬라이더·버튼 포인트를 딥 네이비 블루로 변경 */
+
+    /* 시그니처 포인트 컬러: 일렉트릭 인디고 & 바이올렛 */
     :root {
-        --primary-color: #1E3A8A !important;
+        --primary-color: #4F46E5 !important;
     }
+
+    /* 사이드바 스타일링 */
+    section[data-testid="stSidebar"] {
+        background-color: #FFFFFF !important;
+        border-right: 1px solid #E0E7FF !important;
+        box-shadow: 4px 0 15px rgba(30, 27, 75, 0.03);
+    }
+    section[data-testid="stSidebar"] .stRadio > div {
+        gap: 0.4rem;
+    }
+    section[data-testid="stSidebar"] .stRadio label {
+        background-color: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        border-radius: 10px;
+        padding: 0.65rem 0.9rem !important;
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+    section[data-testid="stSidebar"] .stRadio label:hover {
+        border-color: #6366F1;
+        background-color: #EEF2FF;
+    }
+
+    /* 버튼 스타일링: 그라데이션 & 호버 입체감 */
     div.stButton > button:first-child,
     div.stDownloadButton > button {
-        background-color: #1E3A8A !important;
+        background: linear-gradient(135deg, #4F46E5 0%, #6D28D9 100%) !important;
         color: #FFFFFF !important;
         border: none !important;
-        border-radius: 6px !important;
+        border-radius: 10px !important;
+        padding: 0.6rem 1.2rem !important;
         font-weight: 600 !important;
+        letter-spacing: -0.01em;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25) !important;
+        transition: all 0.2s ease !important;
     }
-    /* 지표(Metric) 카드 테두리 및 그림자 */
+    div.stButton > button:first-child:hover,
+    div.stDownloadButton > button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35) !important;
+    }
+
+    /* KPI 메트릭 카드: 상단 바이올렛 액센트 라인 + 글래스 카드 */
     div[data-testid="stMetric"] {
         background-color: #FFFFFF !important;
-        border: 1px solid #E2E8F0 !important;
-        padding: 1rem 1.2rem !important;
-        border-radius: 8px !important;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+        border: 1px solid #E0E7FF !important;
+        border-top: 4px solid #4F46E5 !important;
+        padding: 1.15rem 1.3rem !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 14px rgba(30, 27, 75, 0.04) !important;
     }
-    /* 세련된 다크 네이비 상단 헤더 */
-    .enterprise-header {
-        background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-        padding: 1.8rem 2.2rem;
-        border-radius: 10px;
-        border-left: 6px solid #3B82F6;
-        margin-bottom: 1.8rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+    div[data-testid="stMetric"] label {
+        color: #64748B !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
     }
-    .enterprise-header h1 {
-        font-size: 1.65rem !important;
-        font-weight: 700 !important;
-        margin: 0 0 0.45rem 0 !important;
+    div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
+        color: #1E1B4B !important;
+        font-weight: 800 !important;
         letter-spacing: -0.02em;
+    }
+
+    /* 히어로 상단 배너 */
+    .hero-banner {
+        background: linear-gradient(125deg, #1E1B4B 0%, #312E81 55%, #4C1D95 100%);
+        padding: 2rem 2.4rem;
+        border-radius: 16px;
+        margin-bottom: 1.8rem;
+        box-shadow: 0 10px 25px -5px rgba(30, 27, 75, 0.22);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(165, 180, 252, 0.2);
+    }
+    .hero-badge {
+        display: inline-block;
+        background: rgba(129, 140, 248, 0.2);
+        color: #C7D2FE;
+        border: 1px solid rgba(165, 180, 252, 0.35);
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.7rem;
+    }
+    .hero-banner h1 {
+        font-size: 1.75rem !important;
+        font-weight: 800 !important;
+        margin: 0 0 0.45rem 0 !important;
+        letter-spacing: -0.025em;
         color: #FFFFFF !important;
     }
-    .enterprise-header p {
-        font-size: 0.92rem !important;
-        color: #94A3B8 !important;
+    .hero-banner p {
+        font-size: 0.95rem !important;
+        color: #CBD5E1 !important;
         margin: 0 !important;
+    }
+
+    /* 섹션 타이틀 카드 */
+    .section-header-box {
+        background: #FFFFFF;
+        border-left: 5px solid #4F46E5;
+        padding: 1rem 1.4rem;
+        border-radius: 0 12px 12px 0;
+        margin-bottom: 1.4rem;
+        box-shadow: 0 2px 8px rgba(30, 27, 75, 0.03);
+    }
+    .section-tag {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #4F46E5;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 0.2rem;
+    }
+    .section-title {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #1E1B4B;
+        margin: 0;
+        letter-spacing: -0.02em;
+    }
+
+    /* 로그인 전용 카드 */
+    .login-card {
+        background: #FFFFFF;
+        padding: 2.2rem;
+        border-radius: 16px;
+        border: 1px solid #E0E7FF;
+        box-shadow: 0 10px 25px rgba(30, 27, 75, 0.06);
+        margin-top: 1rem;
+    }
+
+    /* 탭 & 익스팬더 정돈 */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background-color: #EEF2FF;
+        padding: 6px;
+        border-radius: 10px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px;
+        font-weight: 600;
+        color: #4338CA;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #FFFFFF !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    div[data-testid="stExpander"] {
+        background-color: #FFFFFF !important;
+        border: 1px solid #E0E7FF !important;
+        border-radius: 12px !important;
     }
 </style>
 
-<div class="enterprise-header">
-    <h1>K-SafeGuard | 주택담보 리스크 평가 및 동적 보증료 산정 시스템</h1>
-    <p>Mortgage Default Risk Scoring & Dynamic Guarantee Pricing Platform</p>
+<div class="hero-banner">
+    <div class="hero-badge">PROPTECH RISK INTELLIGENCE // DYNAMIC PRICING</div>
+    <h1>K-SafeGuard | 주택담보 리스크 평가 및 동적 보증료 산정 플랫폼</h1>
+    <p>Mortgage Default Risk Scoring, Explainable Underwriting & Macro Stress Simulation</p>
 </div>
 """, unsafe_allow_html=True)
+
+def render_section_header(tag, title):
+    st.markdown(f"""
+    <div class="section-header-box">
+        <div class="section-tag">{tag}</div>
+        <div class="section-title">{title}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
-    col1, col2, col3 = st.columns([1, 1.2, 1])
+    col1, col2, col3 = st.columns([1, 1.15, 1])
     with col2:
-        st.subheader("관계자 인증 (Access Control)")
-        pwd = st.text_input("시스템 접속 비밀번호를 입력하세요", type="password", placeholder="비밀번호 입력")
-        if st.button("시스템 접속", use_container_width=True, type="primary"):
+        st.markdown("""
+        <div class="login-card">
+            <div style="font-size:0.78rem; font-weight:700; color:#4F46E5; letter-spacing:0.06em; margin-bottom:0.3rem;">ACCESS CONTROL</div>
+            <h3 style="margin:0 0 0.5rem 0; color:#1E1B4B; font-weight:800;">리스크 관제 시스템 인증</h3>
+            <p style="font-size:0.88rem; color:#64748B; margin-bottom:1.2rem;">인가된 심사역 및 분석 담당자 전용 환경입니다. 접속 코드를 입력해 주세요.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        pwd = st.text_input("접속 비밀번호", type="password", placeholder="비밀번호 입력 (kmis)", label_visibility="collapsed")
+        if st.button("플랫폼 접속하기", use_container_width=True, type="primary"):
             if pwd == "kmis":
                 st.session_state.authenticated = True
                 st.rerun()
             else:
-                st.error("비밀번호가 올바르지 않습니다. 다시 확인해 주세요.")
+                st.error("접속 비밀번호가 일치하지 않습니다.")
     st.stop()
 
 # ---------------------------------------------------------
-# 1. 데이터 로드 및 기본 타깃(고위험 보증 매물) 정의 함수
+# 1. 데이터 로드 및 기본 타깃 정의 함수
 # ---------------------------------------------------------
 @st.cache_data
 def load_default_data():
@@ -115,7 +255,6 @@ def prepare_base_features(df_raw):
     zip_avg = df.groupby("zipcode")["price_per_sqft"].transform("mean")
     df["overvaluation_ratio"] = (df["price_per_sqft"] / zip_avg).round(3)
     
-    # 타깃 변수 생성: 복합 리스크 스코어 + 현실적 시장·차주 불확실성 반영
     np.random.seed(42)
     market_shock = np.random.normal(0, 0.8, len(df))
     risk_score = (
@@ -145,7 +284,12 @@ if "models" not in st.session_state:
 # 사이드바 네비게이션
 # ---------------------------------------------------------
 with st.sidebar:
-    st.header("업무 모듈 선택")
+    st.markdown("""
+    <div style="padding: 0.4rem 0 0.8rem 0; border-bottom: 1px solid #E0E7FF; margin-bottom: 1rem;">
+        <div style="font-size: 0.72rem; font-weight: 800; color: #4F46E5; letter-spacing: 0.08em;">NAVIGATION</div>
+        <div style="font-size: 1.1rem; font-weight: 800; color: #1E1B4B;">업무 프로세스 선택</div>
+    </div>
+    """, unsafe_allow_html=True)
     menu = st.radio(
         "단계별 시스템 이동",
         [
@@ -154,16 +298,20 @@ with st.sidebar:
             "03. 예측 모델 학습 및 성능 검증",
             "04. 개별 담보 심사 및 동적 보증료 산정",
             "05. 거시경제 스트레스 테스트"
-        ]
+        ],
+        label_visibility="collapsed"
     )
     st.divider()
-    st.subheader("데이터 소스 관리")
+    st.markdown("""
+    <div style="font-size: 0.72rem; font-weight: 800; color: #4F46E5; letter-spacing: 0.08em; margin-bottom: 0.3rem;">DATA SOURCE</div>
+    <div style="font-size: 0.95rem; font-weight: 700; color: #1E1B4B; margin-bottom: 0.6rem;">포트폴리오 데이터 관리</div>
+    """, unsafe_allow_html=True)
     uploaded_file = st.file_uploader("신규 포트폴리오 CSV 업로드 (선택)", type=["csv"])
     if uploaded_file is not None:
         st.session_state.df_raw = prepare_base_features(pd.read_csv(uploaded_file))
         st.session_state.df_processed = None
         st.session_state.models = {}
-        st.success("업로드 데이터 적용이 완료되었습니다.")
+        st.success("업로드 데이터 적용 완료")
 
     if st.button("기본 실거래 데이터로 초기화", use_container_width=True):
         st.session_state.df_raw = load_default_data()
@@ -176,11 +324,22 @@ if df is None:
     st.error("데이터 파일(kc_house_data.csv)을 찾을 수 없습니다. 같은 폴더에 파일을 두거나 왼쪽에서 업로드해 주세요.")
     st.stop()
 
+# 공통 차트 스타일 헬퍼
+def style_chart(fig, height=420):
+    fig.update_layout(
+        paper_bgcolor="#FFFFFF",
+        plot_bgcolor="#F8FAFC",
+        font=dict(family="Pretendard, sans-serif", color="#1E1B4B"),
+        height=height,
+        margin=dict(l=30, r=30, t=55, b=35)
+    )
+    return fig
+
 # =========================================================
 # 모듈 1: 포트폴리오 & 심층 EDA
 # =========================================================
 if menu == "01. 포트폴리오 현황 및 데이터 탐색":
-    st.header("01. 보증 포트폴리오 현황 및 데이터 탐색")
+    render_section_header("MODULE 01 // PORTFOLIO ANALYTICS", "보증 포트폴리오 현황 및 리스크 요인 탐색")
     
     total_assets = df["price"].sum() / 1e8
     avg_price = df["price"].mean()
@@ -226,24 +385,24 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
     with col_a:
         fig_violin1 = px.violin(
             df, x="Risk_Label", y="building_age", color="Risk_Label", box=True,
-            color_discrete_map={"안전 매물(정상)": "#0284c7", "고위험 매물(주의)": "#dc2626"},
+            color_discrete_map={"안전 매물(정상)": "#4F46E5", "고위험 매물(주의)": "#E11D48"},
             labels={"Risk_Label": "리스크 등급", "building_age": "건물 노후도 (년)"},
             title="건물 노후도(연식)에 따른 리스크 분포 차이"
         )
         fig_violin1.update_traces(spanmode="hard")
         fig_violin1.update_layout(showlegend=False)
-        st.plotly_chart(fig_violin1, use_container_width=True)
+        st.plotly_chart(style_chart(fig_violin1), use_container_width=True)
     with col_b:
         df_clip_over = df[df["overvaluation_ratio"] <= 2.2]
         fig_violin2 = px.violin(
             df_clip_over, x="Risk_Label", y="overvaluation_ratio", color="Risk_Label", box=True,
-            color_discrete_map={"안전 매물(정상)": "#0284c7", "고위험 매물(주의)": "#dc2626"},
+            color_discrete_map={"안전 매물(정상)": "#4F46E5", "고위험 매물(주의)": "#E11D48"},
             labels={"Risk_Label": "리스크 등급", "overvaluation_ratio": "지역 시세 대비 고평가 지수 (1.0=평균)"},
             title="지역 평균 대비 고평가 비율 분포 차이 (핵심 구간 확대)"
         )
         fig_violin2.update_traces(spanmode="hard")
         fig_violin2.update_layout(showlegend=False)
-        st.plotly_chart(fig_violin2, use_container_width=True)
+        st.plotly_chart(style_chart(fig_violin2), use_container_width=True)
 
     st.subheader("건축연대별 리스크 추이 및 등급·관리상태 교차 위험 매트릭스")
     col_c1, col_c2 = st.columns(2)
@@ -255,29 +414,29 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
         ).reset_index()
         fig_combo = make_subplots(specs=[[{"secondary_y": True}]])
         fig_combo.add_trace(
-            go.Bar(x=decade_df["built_decade"].astype(str) + "년대", y=decade_df["avg_price"], name="평균 주택 시세 ($)", marker_color="#93c5fd"),
+            go.Bar(x=decade_df["built_decade"].astype(str) + "년대", y=decade_df["avg_price"], name="평균 주택 시세 ($)", marker_color="#A5B4FC"),
             secondary_y=False
         )
         fig_combo.add_trace(
-            go.Scatter(x=decade_df["built_decade"].astype(str) + "년대", y=decade_df["risk_pct"], name="고위험 매물 비중 (%)", mode="lines+markers", line=dict(color="#dc2626", width=3)),
+            go.Scatter(x=decade_df["built_decade"].astype(str) + "년대", y=decade_df["risk_pct"], name="고위험 매물 비중 (%)", mode="lines+markers", line=dict(color="#E11D48", width=3)),
             secondary_y=True
         )
         fig_combo.update_layout(title="건축연대별 평균 담보 시세 vs 고위험 비중(%) 추이", legend=dict(orientation="h", y=1.12))
         fig_combo.update_yaxes(title_text="평균 시세 ($)", secondary_y=False)
         fig_combo.update_yaxes(title_text="고위험 비중 (%)", secondary_y=True)
-        st.plotly_chart(fig_combo, use_container_width=True)
+        st.plotly_chart(style_chart(fig_combo), use_container_width=True)
 
     with col_c2:
         matrix_df = df.pivot_table(index="grade", columns="condition", values="High_Risk", aggfunc="mean") * 100
         fig_matrix = px.imshow(
-            matrix_df, text_auto=".1f", color_continuous_scale="YlOrRd", aspect="auto",
+            matrix_df, text_auto=".1f", color_continuous_scale="Purples", aspect="auto",
             origin="lower",
             labels={"x": "주택 관리 상태 (1:불량 ~ 5:최상)", "y": "건축 등급 (Grade)", "color": "고위험률(%)"},
             title="건축 등급 × 관리 상태별 부실 위험률(%) 매트릭스"
         )
         fig_matrix.update_xaxes(dtick=1)
         fig_matrix.update_yaxes(dtick=1)
-        st.plotly_chart(fig_matrix, use_container_width=True)
+        st.plotly_chart(style_chart(fig_matrix), use_container_width=True)
 
     st.subheader("지역별 담보 리스크 공간 분포 및 고위험 집중 구역 TOP 15")
     map_col1, map_col2 = st.columns([1.4, 1])
@@ -287,13 +446,13 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
         
         fig_map = px.scatter_map(
             df_map, lat="lat", lon="long", color="Risk_Label", size="price",
-            color_discrete_map={"안전 매물(정상)": "#0284c7", "고위험 매물(주의)": "#dc2626"},
+            color_discrete_map={"안전 매물(정상)": "#4F46E5", "고위험 매물(주의)": "#E11D48"},
             hover_data={"lat": False, "long": False, "zipcode": True, "price": ":$,.0f", "building_age": True, "grade": True, "overvaluation_ratio": True},
             center={"lat": df["lat"].mean(), "lon": df["long"].mean()},
             zoom=9.0, height=500, map_style="carto-positron",
             title="행정구역별 담보 리스크 공간 분포"
         )
-        st.plotly_chart(fig_map, use_container_width=True)
+        st.plotly_chart(style_chart(fig_map, height=500), use_container_width=True)
 
     with map_col2:
         st.markdown("<br><br>", unsafe_allow_html=True)
@@ -306,23 +465,23 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
         zip_top15["zipcode_str"] = "우편번호 " + zip_top15["zipcode"].astype(str)
         fig_zip = px.bar(
             zip_top15, x="risk_rate", y="zipcode_str", orientation="h",
-            text="risk_rate", color="risk_rate", color_continuous_scale="Reds",
+            text="risk_rate", color="risk_rate", color_continuous_scale="Purples",
             labels={"risk_rate": "고위험 매물 비중 (%)", "zipcode_str": "행정구역"},
             title="보증사고 위험 집중 우편번호 TOP 15"
         )
         fig_zip.update_traces(texttemplate="%{text}%", textposition="outside")
-        fig_zip.update_layout(height=500, coloraxis_showscale=False)
-        st.plotly_chart(fig_zip, use_container_width=True)
+        fig_zip.update_layout(coloraxis_showscale=False)
+        st.plotly_chart(style_chart(fig_zip, height=500), use_container_width=True)
 
     st.subheader("면적 · 시세 · 주택등급 · 리스크 다변량 상호작용")
     sample_df = df.sample(min(1500, len(df)), random_state=42)
     fig_bubble = px.scatter(
         sample_df, x="sqft_living", y="price", color="Risk_Label", size="grade",
-        color_discrete_map={"안전 매물(정상)": "#0284c7", "고위험 매물(주의)": "#dc2626"},
+        color_discrete_map={"안전 매물(정상)": "#4F46E5", "고위험 매물(주의)": "#E11D48"},
         labels={"sqft_living": "주거 면적 (sqft)", "price": "주택 시세 ($)", "Risk_Label": "리스크 등급"},
         title="주거 면적 vs 시세 (원 크기: 주택 등급 / 색상: 리스크 등급)"
     )
-    st.plotly_chart(fig_bubble, use_container_width=True)
+    st.plotly_chart(style_chart(fig_bubble), use_container_width=True)
 
     st.subheader("상관관계 히트맵 및 다중공선성(VIF) 진단")
     c_left, c_right = st.columns([1.3, 1])
@@ -333,8 +492,7 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
             corr, text_auto=".2f", color_continuous_scale="RdBu_r", aspect="auto",
             title="주요 리스크 변수 간 상관계수"
         )
-        fig_heat.update_layout(height=480)
-        st.plotly_chart(fig_heat, use_container_width=True)
+        st.plotly_chart(style_chart(fig_heat, height=460), use_container_width=True)
     with c_right:
         st.markdown("**다중공선성(VIF) 자동 진단표** *(로지스틱 회귀 안정성 검증)*")
         vif_features = ["bedrooms", "bathrooms", "sqft_living", "floors", "grade", "building_age", "overvaluation_ratio"]
@@ -351,7 +509,7 @@ if menu == "01. 포트폴리오 현황 및 데이터 탐색":
 # 모듈 2: 데이터 정제 및 파생변수 설계
 # =========================================================
 elif menu == "02. 데이터 정제 및 파생변수 설계":
-    st.header("02. 데이터 품질 감사 및 정제·파생변수 파이프라인")
+    render_section_header("MODULE 02 // FEATURE ENGINEERING", "데이터 품질 감사 및 도메인 파생변수 파이프라인")
     st.write("원본 데이터의 무결성(결측·중복·변수 구조)을 진단한 뒤, 주택담보 보증 심사 기준에 맞춘 정제 및 파생변수 파이프라인을 실행합니다.")
 
     st.subheader("1) 원본 데이터 품질 감사 (Data Quality Audit)")
@@ -469,11 +627,11 @@ elif menu == "02. 데이터 정제 및 파생변수 설계":
 
         c_b1, c_b2 = st.columns(2)
         with c_b1:
-            fig_before = px.histogram(df, x="price", nbins=50, title="전처리 전(Before) 주택 가격 분포", color_discrete_sequence=["#94a3b8"])
-            st.plotly_chart(fig_before, use_container_width=True)
+            fig_before = px.histogram(df, x="price", nbins=50, title="전처리 전(Before) 주택 가격 분포", color_discrete_sequence=["#94A3B8"])
+            st.plotly_chart(style_chart(fig_before), use_container_width=True)
         with c_b2:
-            fig_after = px.histogram(df_p, x="price", nbins=50, title="전처리 후(After) 정제된 담보 가격 분포", color_discrete_sequence=["#0284c7"])
-            st.plotly_chart(fig_after, use_container_width=True)
+            fig_after = px.histogram(df_p, x="price", nbins=50, title="전처리 후(After) 정제된 담보 가격 분포", color_discrete_sequence=["#4F46E5"])
+            st.plotly_chart(style_chart(fig_after), use_container_width=True)
 
         if scale_opt:
             st.subheader("스케일링(StandardScaler) 적용 전·후 변수 분포 비교")
@@ -497,7 +655,7 @@ elif menu == "02. 데이터 정제 및 파생변수 설계":
 # 모듈 3: 예측 모델 학습 및 성능 검증
 # =========================================================
 elif menu == "03. 예측 모델 학습 및 성능 검증":
-    st.header("03. 예측 모델 성능 비교 및 운영 모델 선정")
+    render_section_header("MODULE 03 // MODEL BENCHMARKING", "예측 모델 성능 비교 및 운영 모델 선정")
     
     if st.session_state.df_processed is None:
         st.warning("먼저 왼쪽 메뉴의 '02. 데이터 정제 및 파생변수 설계'에서 [전처리 파이프라인 실행] 버튼을 눌러주세요.")
@@ -542,8 +700,9 @@ elif menu == "03. 예측 모델 학습 및 성능 검증":
             results = []
             trained_models = {}
             roc_fig = go.Figure()
+            palette = ["#64748B", "#4F46E5", "#10B981"]
 
-            for name, m in model_dict.items():
+            for idx_m, (name, m) in enumerate(model_dict.items()):
                 m.fit(X_train_s, y_train)
                 y_prob = m.predict_proba(X_test_s)[:, 1]
                 y_pred = (y_prob >= 0.42).astype(int)
@@ -564,9 +723,9 @@ elif menu == "03. 예측 모델 학습 및 성능 검증":
                 trained_models[name] = m
 
                 fpr, tpr, _ = roc_curve(y_test, y_prob)
-                roc_fig.add_trace(go.Scatter(x=fpr, y=tpr, mode="lines", name=f"{name} (AUC={auc:.3f})"))
+                roc_fig.add_trace(go.Scatter(x=fpr, y=tpr, mode="lines", line=dict(color=palette[idx_m], width=2.8), name=f"{name} (AUC={auc:.3f})"))
 
-            roc_fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode="lines", line=dict(dash="dash", color="gray"), name="기준선"))
+            roc_fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode="lines", line=dict(dash="dash", color="#CBD5E1"), name="기준선"))
             roc_fig.update_layout(title="모델별 ROC Curve 변별력 비교", xaxis_title="False Positive Rate", yaxis_title="True Positive Rate")
 
             st.session_state.models = trained_models
@@ -591,25 +750,27 @@ elif menu == "03. 예측 모델 학습 및 성능 검증":
         with col_r1:
             radar_fig = go.Figure()
             metrics_cols = ["Accuracy (정확도)", "Precision (정밀도)", "Recall (재현율/부실탐지율)", "F1-Score", "ROC-AUC"]
-            for _, row in res_df.iterrows():
+            radar_colors = ["#64748B", "#4F46E5", "#10B981"]
+            for idx_r, (_, row) in enumerate(res_df.iterrows()):
                 radar_fig.add_trace(go.Scatterpolar(
                     r=[row[m] for m in metrics_cols],
                     theta=metrics_cols,
                     fill="toself",
+                    line=dict(color=radar_colors[idx_r]),
                     name=row["모델명"]
                 ))
             radar_fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0.4, 1.0])), title="3대 예측 모델 다차원 성능 레이더 차트")
-            st.plotly_chart(radar_fig, use_container_width=True)
+            st.plotly_chart(style_chart(radar_fig), use_container_width=True)
 
         with col_r2:
-            st.plotly_chart(st.session_state.roc_fig, use_container_width=True)
+            st.plotly_chart(style_chart(st.session_state.roc_fig), use_container_width=True)
 
         col_b1, col_b2 = st.columns(2)
         with col_b1:
             dt_model = st.session_state.models["Decision Tree"]
             imp_df = pd.DataFrame({"변수": features, "중요도": dt_model.feature_importances_}).sort_values("중요도", ascending=True)
-            fig_imp = px.bar(imp_df, x="중요도", y="변수", orientation="h", title="핵심 부실 결정 요인 (심사 기준 근거)", color_discrete_sequence=["#1e3a8a"])
-            st.plotly_chart(fig_imp, use_container_width=True)
+            fig_imp = px.bar(imp_df, x="중요도", y="변수", orientation="h", title="핵심 부실 결정 요인 (심사 기준 근거)", color_discrete_sequence=["#4F46E5"])
+            st.plotly_chart(style_chart(fig_imp), use_container_width=True)
 
         with col_b2:
             sel_cm_model = st.selectbox("혼동행렬(Confusion Matrix) 확인할 모델 선택", list(st.session_state.models.keys()))
@@ -617,17 +778,17 @@ elif menu == "03. 예측 모델 학습 및 성능 검증":
             cm_pred = (cm_prob >= 0.35).astype(int)
             cm = confusion_matrix(st.session_state.y_test, cm_pred)
             fig_cm = px.imshow(
-                cm, text_auto=True, color_continuous_scale="Blues",
+                cm, text_auto=True, color_continuous_scale="Purples",
                 x=["예측: 안전(0)", "예측: 고위험(1)"], y=["실제: 안전(0)", "실제: 고위험(1)"],
                 title=f"{sel_cm_model} 예측 검증 행렬"
             )
-            st.plotly_chart(fig_cm, use_container_width=True)
+            st.plotly_chart(style_chart(fig_cm), use_container_width=True)
 
 # =========================================================
 # 모듈 4: 개별 담보 심사 및 동적 보증료 산정
 # =========================================================
 elif menu == "04. 개별 담보 심사 및 동적 보증료 산정":
-    st.header("04. 개별 담보 리스크 심사 및 적정 보증료 산정")
+    render_section_header("MODULE 04 // DYNAMIC PRICING ENGINE", "개별 담보 리스크 심사 및 적정 보증료 산정")
     
     if not st.session_state.models:
         st.warning("먼저 '03. 예측 모델 학습 및 성능 검증'에서 모델을 학습시켜 주세요.")
@@ -690,20 +851,20 @@ elif menu == "04. 개별 담보 심사 및 동적 보증료 산정":
         fig_gauge = go.Figure(go.Indicator(
             mode="gauge+number",
             value=pd_prob * 100,
-            number={"suffix": "%"},
-            title={"text": "예상 보증사고 확률 (PD)"},
+            number={"suffix": "%", "font": {"color": "#1E1B4B", "size": 44}},
+            title={"text": "예상 보증사고 확률 (PD)", "font": {"size": 16, "color": "#4338CA"}},
             gauge={
                 "axis": {"range": [0, 100]},
-                "bar": {"color": "#1e3a8a"},
+                "bar": {"color": "#4F46E5"},
                 "steps": [
-                    {"range": [0, 30], "color": "#e0f2fe"},
-                    {"range": [30, 65], "color": "#fef3c7"},
-                    {"range": [65, 100], "color": "#fee2e2"}
+                    {"range": [0, 30], "color": "#EEF2FF"},
+                    {"range": [30, 65], "color": "#FEF3C7"},
+                    {"range": [65, 100], "color": "#FFE4E6"}
                 ],
-                "threshold": {"line": {"color": "#dc2626", "width": 4}, "thickness": 0.75, "value": 65}
+                "threshold": {"line": {"color": "#E11D48", "width": 4}, "thickness": 0.75, "value": 65}
             }
         ))
-        st.plotly_chart(fig_gauge, use_container_width=True)
+        st.plotly_chart(style_chart(fig_gauge, height=340), use_container_width=True)
 
     with res_c2:
         st.subheader("심사 결과 및 보증 조건 산출 내역")
@@ -728,7 +889,7 @@ elif menu == "04. 개별 담보 심사 및 동적 보증료 산정":
 # 모듈 5: 거시경제 스트레스 테스트 & 리포트 다운로드
 # =========================================================
 elif menu == "05. 거시경제 스트레스 테스트":
-    st.header("05. 거시경제 스트레스 테스트 (시세 하락 시나리오 분석)")
+    render_section_header("MODULE 05 // MACRO STRESS TEST", "거시경제 스트레스 테스트 (시세 하락 시나리오 분석)")
     st.write("주택 가격 하락 시나리오에 따른 포트폴리오 예상 대위변제 손실액과 한도 규제 적용 시의 손실 절감 효과를 시뮬레이션합니다.")
 
     if st.session_state.df_processed is None:
@@ -769,10 +930,10 @@ elif menu == "05. 거시경제 스트레스 테스트":
     k3.metric("보증 기금 손실 절감 효과", f"${saved_amount:,.1f} 백만", f"손실액 {(saved_amount/max(1, loss_no_policy[idx]))*100:.1f}% 감소")
 
     fig_stress = go.Figure()
-    fig_stress.add_trace(go.Scatter(x=[f"-{d}%" for d in drops], y=loss_no_policy, mode="lines+markers", name="기존 일률 보증 방식 (예상 손실)", line=dict(color="#dc2626", width=3)))
-    fig_stress.add_trace(go.Scatter(x=[f"-{d}%" for d in drops], y=loss_with_ai, mode="lines+markers", name="K-SafeGuard 동적 관리 적용 (예상 손실)", line=dict(color="#0284c7", width=3)))
+    fig_stress.add_trace(go.Scatter(x=[f"-{d}%" for d in drops], y=loss_no_policy, mode="lines+markers", name="기존 일률 보증 방식 (예상 손실)", line=dict(color="#E11D48", width=3)))
+    fig_stress.add_trace(go.Scatter(x=[f"-{d}%" for d in drops], y=loss_with_ai, mode="lines+markers", name="K-SafeGuard 동적 관리 적용 (예상 손실)", line=dict(color="#4F46E5", width=3)))
     fig_stress.update_layout(title="시세 하락 시나리오별 누적 대위변제 손실액 비교 (단위: 백만 $)", xaxis_title="부동산 시세 하락률", yaxis_title="예상 손실액 ($M)")
-    st.plotly_chart(fig_stress, use_container_width=True)
+    st.plotly_chart(style_chart(fig_stress), use_container_width=True)
 
     st.divider()
     st.subheader("심사 리포트 및 고위험군 관리 대장 추출")
