@@ -18,6 +18,30 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 st.set_page_config(page_title="K-SafeGuard | 주택담보 리스크 인텔리전스", layout="wide")
 
 st.markdown("""
+/* 최신 Streamlit 사이드바 라디오 카드 강제 적용 */
+    [data-testid="stSidebar"] [role="radiogroup"] label {
+        background-color: #F4F7F5 !important;
+        border: 1px solid #D5E2DC !important;
+        border-radius: 10px !important;
+        padding: 12px 14px !important;
+        margin-bottom: 6px !important;
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
+        background: #064E3B !important;
+        border-left: 5px solid #34D399 !important;
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) * {
+        color: #FFFFFF !important;
+    }
+
+    /* 최신 Streamlit border=True 컨테이너 카드 배경 강제 적용 */
+    [data-testid="stLayoutWrapper"] > div[style*="border"] {
+        background-color: #FFFFFF !important;
+        border-top: 4px solid #059669 !important;
+        border-radius: 12px !important;
+        padding: 1.2rem !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+    }
 <style>
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 
