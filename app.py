@@ -1094,23 +1094,40 @@ elif menu == "04. 개별 담보 심사 및 동적 보증료 산정":
 
     with res_c2:
         st.subheader("심사 결과 및 보증 조건 산출 내역")
+        
+        limit_diff = safe_limit - in_deposit
+        
+        # 판정 상태 세분화 및 맞춤형 심사 의견 구성
         if pd_prob < 0.30 and in_deposit <= safe_limit:
             st.success("**최종 판정: 정상 승인 (우량 담보)** — 기본 우대 보증료율 적용 가능")
+            opinion_tail = f"연 **{dynamic_fee_rate*100:.2f}%**의 우대 보증료율로 정상 승인을 권고합니다."
+        elif pd_prob < 0.30 and in_deposit > safe_limit:
+            st.warning("**최종 판정: 조건부 승인 (신청액이 안전 한도 초과 — 한도 감액 또는 할증 권고)**")
+            opinion_tail = (
+                f"사고 확률({pd_prob*100:.1f}%)은 낮으나 신청액이 권고 안전 한도를 초과하여, "
+                f"보증 한도를 **${safe_limit:,.0f}** 수준으로 조정하거나 연 **{dynamic_fee_rate*100:.2f}%** 보증료율 적용을 권고합니다."
+            )
         elif pd_prob < 0.65:
             st.warning("**최종 판정: 조건부 승인 (리스크 할증 또는 한도 감액 권고)**")
+            opinion_tail = f"연 **{dynamic_fee_rate*100:.2f}%**의 할증 보증료율 적용 또는 안전 한도(**${safe_limit:,.0f}**) 내 조정을 권고합니다."
         else:
             st.error("**최종 판정: 보증 거절 권고 (고위험 부실 우려 매물)**")
+            opinion_tail = f"예상 사고 확률이 **{pd_prob*100:.1f}%**로 매우 높아 보증 거절을 권고합니다."
+
+        # 부호 포맷팅 깔끔하게 처리 (-$16,507 / +$16,507)
+        diff_str = f"-${abs(limit_diff):,.0f} (한도 초과)" if limit_diff < 0 else f"+${limit_diff:,.0f} (여유)"
 
         m1, m2, m3 = st.columns(3)
-        m1.metric("기대손실액 (EL)", f"${expected_loss:,.0f}", f"손실률(LGD) {lgd*100:.1f}%")
-        m2.metric("적정 동적 보증료율", f"{dynamic_fee_rate*100:.2f}%", f"기존 0.15% 대비 +{(dynamic_fee_rate-base_fee_rate)*100:.2f}%p")
-        m3.metric("권고 안전 보증 한도", f"${safe_limit:,.0f}", f"신청액 대비 ${safe_limit - in_deposit:,.0f}")
+        # delta_color="off" 또는 "inverse"로 어색한 초록 화살표 방지
+        m1.metric("기대손실액 (EL)", f"${expected_loss:,.0f}", f"손실률(LGD) {lgd*100:.1f}%", delta_color="off")
+        m2.metric("적정 동적 보증료율", f"{dynamic_fee_rate*100:.2f}%", f"+{(dynamic_fee_rate-base_fee_rate)*100:.2f}%p (기존 0.15%)", delta_color="inverse")
+        m3.metric("권고 안전 보증 한도", f"${safe_limit:,.0f}", diff_str)
 
+        # 마크다운 별표 오류 방지를 위해 HTML 태그 사용 또는 띄어쓰기 적용
         st.info(
-            f"**심사 의견:** 신청 보증금(${in_deposit:,})은 감정가 대비 {ltv_current*100:.1f}% 수준입니다. "
-            f"건물 경과연수({in_age}년)와 시세 괴리율({in_overval})을 반영해 연 **{dynamic_fee_rate*100:.2f}%**의 보증료율 적용 또는 한도 조정을 권고합니다."
+            f"**심사 의견:** 신청 보증금(${in_deposit:,.0f})은 감정가 대비 {ltv_current*100:.1f}% 수준입니다. "
+            f"건물 경과연수({in_age}년)와 시세 괴리율({in_overval})을 종합 반영하여, {opinion_tail}"
         )
-
 # =========================================================
 # 모듈 5: 거시경제 스트레스 테스트 & 리포트 다운로드
 # =========================================================
