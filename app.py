@@ -1100,7 +1100,7 @@ elif menu == "04. 개별 담보 심사 및 동적 보증료 산정":
         # 판정 상태 세분화 및 맞춤형 심사 의견 구성
         if pd_prob < 0.30 and in_deposit <= safe_limit:
             st.success("**최종 판정: 정상 승인 (우량 담보)** — 기본 우대 보증료율 적용 가능")
-            opinion_tail = f"연 **{dynamic_fee_rate*100:.2f}%**의 우대 보증료율로 정상 승인을 권고합니다."
+            opinion_tail = f"연 **{dynamic_fee_rate*100:.2f}%** 보증료율로 정상 승인을 권고합니다."
         elif pd_prob < 0.30 and in_deposit > safe_limit:
             st.warning("**최종 판정: 조건부 승인 (신청액이 안전 한도 초과 — 한도 감액 또는 할증 권고)**")
             opinion_tail = (
@@ -1109,11 +1109,10 @@ elif menu == "04. 개별 담보 심사 및 동적 보증료 산정":
             )
         elif pd_prob < 0.65:
             st.warning("**최종 판정: 조건부 승인 (리스크 할증 또는 한도 감액 권고)**")
-            opinion_tail = f"연 **{dynamic_fee_rate*100:.2f}%**의 할증 보증료율 적용 또는 안전 한도(**${safe_limit:,.0f}**) 내 조정을 권고합니다."
+            opinion_tail = f"연 **{dynamic_fee_rate*100:.2f}%** 할증 보증료율 적용 또는 안전 한도 **${safe_limit:,.0f}** 이내 조정을 권고합니다."
         else:
             st.error("**최종 판정: 보증 거절 권고 (고위험 부실 우려 매물)**")
-            opinion_tail = f"예상 사고 확률이 **{pd_prob*100:.1f}%**로 매우 높아 보증 거절을 권고합니다."
-
+            opinion_tail = f"예상 사고 확률이 **{pd_prob*100:.1f}%** 수준으로 매우 높아 보증 거절을 권고합니다."
         # 부호 포맷팅 깔끔하게 처리 (-$16,507 / +$16,507)
         diff_str = f"-${abs(limit_diff):,.0f} (한도 초과)" if limit_diff < 0 else f"+${limit_diff:,.0f} (여유)"
 
