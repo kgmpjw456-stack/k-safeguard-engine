@@ -390,7 +390,7 @@ if not st.session_state.authenticated:
             <p style="font-size:0.88rem; color:#4B5563; margin-bottom:1.2rem;">인가된 심사역 및 분석 담당자 전용 환경입니다. 접속 코드를 입력해 주세요.</p>
         </div>
         """, unsafe_allow_html=True)
-        pwd = st.text_input("접속 비밀번호", type="password", placeholder="비밀번호 입력 (kmis)", label_visibility="collapsed")
+        pwd = st.text_input("접속 비밀번호", type="password", placeholder="비밀번호 입력", label_visibility="collapsed")
         if st.button("플랫폼 접속하기", use_container_width=True, type="primary"):
             if pwd == "kmis":
                 st.session_state.authenticated = True
